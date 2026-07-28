@@ -1,4 +1,4 @@
-# prep_demo_data.py
+﻿# prep_demo_data.py
 import os
 import django
 from decimal import Decimal
@@ -15,7 +15,7 @@ except ModuleNotFoundError:
 from finance.models import Teacher, ClassStream, Subject, Student, FeeInvoice, ExamRecord, FeeReceipt
 
 def stage_demo_environment():
-    print("✨ Purging old entries and staging comprehensive database framework for Crescent Heights...")
+    print("✨ Purging old entries and staging comprehensive database framework for Kabiero...")
     
     # 1. Clear existing records in strict dependency order to prevent foreign key errors
     ExamRecord.objects.all().delete()
@@ -26,13 +26,13 @@ def stage_demo_environment():
     ClassStream.objects.all().delete()
     Teacher.objects.all().delete()
 
-    print("👥 Seeding professional Crescent Heights faculty profiles...")
+    print("👥 Seeding professional Kabiero faculty profiles...")
     # 2. Seed Teacher Profiles
     teacher_one = Teacher.objects.create(
         tsc_number="TSC-889922",
         first_name="Ezekiel",
         last_name="Mutua",
-    email="ezekiel.mutua@crescentheights.ac.ke",
+    email="ezekiel.mutua@kabiero.ac.ke",
         phone_number="+254711002233",
         is_class_teacher=True
     )
@@ -41,7 +41,7 @@ def stage_demo_environment():
         tsc_number="TSC-114455",
         first_name="Sarah",
         last_name="Omwamba",
-    email="sarah.omwamba@crescentheights.ac.ke",
+    email="sarah.omwamba@kabiero.ac.ke",
         phone_number="+254722998877",
         is_class_teacher=True
     )
@@ -128,7 +128,7 @@ def stage_demo_environment():
     ExamRecord.objects.create(student=student_records['103'], subject=math, term='TERM_2', year=2026, cat_1=11.0, cat_2=10.0, final_exam=54.0)  # Total: 75.0% (Variance: +1.0%)
 
     print("\n==================================================================")
-    print("✅ CRESCENT HEIGHTS DEMO SYSTEM INSTANTLY LOADED WITH MASTER DATA!")
+    print("✅ Kabiero DEMO SYSTEM INSTANTLY LOADED WITH MASTER DATA!")
     print(f"   🔹 Registered Teachers: {Teacher.objects.count()}")
     print(f"   🔹 Formatted Streams:  {ClassStream.objects.count()}")
     print(f"   🔹 Active Students:    {Student.objects.count()}")

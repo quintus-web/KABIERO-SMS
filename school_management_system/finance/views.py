@@ -1,4 +1,4 @@
-# finance/views.py
+﻿# finance/views.py
 import datetime
 import json
 from decimal import Decimal
@@ -36,7 +36,7 @@ from .models import (
 # ==========================================
 
 def public_school_website(request):
-    """Renders the official public-facing marketing homepage for Crescent Heights"""
+    """Renders the official public-facing marketing homepage for Kabiero"""
     return render(request, 'marketing/index.html')
 
 
@@ -78,7 +78,7 @@ class MockStream:
         self.name = name
 
 def student_registry_workstation(request):
-    # 1. Define the true primary school grade structure for Crescent Heights School
+    # 1. Define the true primary school grade structure for Kabiero School
     grade_list = ["Playgroup", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
     
     # 2. Populate the exact array list required by your HTML dropdown menu loop
@@ -799,7 +799,7 @@ def fee_defaulters_sms_portal(request):
             defaulters_queue.append({
                 'student': student,
                 'balance': balance,
-                'message_preview': f"Dear Parent, please note Crescent Heights records show an outstanding balance of KES {balance:,.2f} for Adm {student.admission_number}."
+                'message_preview': f"Dear Parent, please note Kabiero records show an outstanding balance of KES {balance:,.2f} for Adm {student.admission_number}."
             })
             
     if request.method == 'POST':
@@ -846,9 +846,9 @@ class LiveCSVStudent:
         self.class_stream = StreamWrapper(self.current_grade)
 
 def _load_students_from_csv():
-    csv_path = os.path.join(settings.BASE_DIR, '..', 'Crescent Heights School - STUDENTS.csv')
+    csv_path = os.path.join(settings.BASE_DIR, '..', 'Kabiero School - STUDENTS.csv')
     if not os.path.exists(csv_path):
-        csv_path = os.path.join(settings.BASE_DIR, 'Crescent Heights School - STUDENTS.csv')
+        csv_path = os.path.join(settings.BASE_DIR, 'Kabiero School - STUDENTS.csv')
         
     students_list = []
     if os.path.exists(csv_path):
@@ -997,9 +997,9 @@ class LiveCSVStudent:
 
 # ── 2. HELPER FUNCTION TO READ THE CSV FILE SAFELY ON EVERY LIVE ACCESS THREAD ──
 def _load_students_from_csv():
-    csv_path = os.path.join(settings.BASE_DIR, '..', 'Crescent Heights School - STUDENTS.csv')
+    csv_path = os.path.join(settings.BASE_DIR, '..', 'Kabiero School - STUDENTS.csv')
     if not os.path.exists(csv_path):
-        csv_path = os.path.join(settings.BASE_DIR, 'Crescent Heights School - STUDENTS.csv')
+        csv_path = os.path.join(settings.BASE_DIR, 'Kabiero School - STUDENTS.csv')
         
     students_list = []
     if os.path.exists(csv_path):

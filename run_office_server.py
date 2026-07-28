@@ -1,4 +1,4 @@
-# run_office_server.py
+﻿# run_office_server.py
 import os
 import sys
 import socket
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     port = 8000
     
     print("=" * 60)
-    print("        CRESCENT HEIGHTS ACADEMY - PRODUCTION OFFICE SERVER")
+    print("        Kabiero ACADEMY - PRODUCTION OFFICE SERVER")
     print("=" * 60)
     print(f" Status:       ACTIVE & RUNNING")
     print(f" Engine:       Waitress WSGI Production Gateway")
