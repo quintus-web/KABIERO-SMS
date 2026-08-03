@@ -109,7 +109,7 @@ class LiveCSVStudent:
 def _load_students_from_csv():
     """Reads foundational tracking records from local project workspace directory."""
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    csv_path = os.path.join(base_dir, "Kabiero School - STUDENTS.csv")
+    csv_path = os.path.join(base_dir, "Educlique School - STUDENTS.csv")
 
     students = []
     if os.path.exists(csv_path):
@@ -497,7 +497,7 @@ def collect_fee_payment(request, student_id):
                 year=2026,
                 title=f"{student.class_stream.name if student.class_stream else 'Unassigned'} {term.replace('_', ' ')} Invoice 2026",
                 amount=invoice_amount,
-                description="Auto-generated from Kabiero Fee Structure 2026"
+                description="Auto-generated from Educlique Fee Structure 2026"
             )
 
         FeeReceipt.objects.create(
@@ -753,7 +753,7 @@ def teacher_sms_broadcast(request):
         
         username = request.POST.get("username", "").strip()
         api_key = request.POST.get("api_key", "").strip()
-        sender_id = request.POST.get("sender_id", "KABIERO").strip()
+        sender_id = request.POST.get("sender_id", "Educlique").strip()
         
         if not username or not api_key:
             messages.error(request, "Africa's Talking credentials required in session settings.")

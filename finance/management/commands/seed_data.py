@@ -18,8 +18,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-        csv_path = os.path.join(base_dir, "Kabiero School - STUDENTS.csv")
-        fees_path = os.path.join(base_dir, "Kabiero_Fees_2026.csv")
+        csv_path = os.path.join(base_dir, "Educlique School - STUDENTS.csv")
+        fees_path = os.path.join(base_dir, "Educlique_Fees_2026.csv")
 
         term_fee_map = {}
         if os.path.exists(fees_path):
@@ -129,7 +129,7 @@ class Command(BaseCommand):
                             title=f"{stream_name} Term 1 Fees 2026",
                             defaults={
                                 'amount': opening_balance,
-                                'description': f"Auto-generated from Kabiero Fee Structure 2026 for {stream_name}"
+                                'description': f"Auto-generated from Educlique Fee Structure 2026 for {stream_name}"
                             }
                         )
                         invoice_count += 1

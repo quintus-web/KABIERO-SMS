@@ -15,9 +15,9 @@
       - key: DJANGO_SETTINGS_MODULE
         value: "sms_core.settings"
       - key: ALLOWED_HOSTS
-        value: "kabiero-school-management-system.onrender.com"
+        value: "Educlique-school-management-system.onrender.com"
       - key: CSRF_TRUSTED_ORIGINS
-        value: "https://kabiero-school-management-system.onrender.com"
+        value: "https://Educlique-school-management-system.onrender.com"
       - key: DEFAULT_ADMIN_USERNAME
         value: "admin"
       - key: DEFAULT_ADMIN_PASSWORD

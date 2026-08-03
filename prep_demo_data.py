@@ -15,7 +15,7 @@ except ModuleNotFoundError:
 from finance.models import Teacher, ClassStream, Subject, Student, FeeInvoice, ExamRecord, FeeReceipt
 
 def stage_demo_environment():
-    print("✨ Purging old entries and staging comprehensive database framework for Kabiero Academy...")
+    print("✨ Purging old entries and staging comprehensive database framework for Educlique Academy...")
     
     # 1. Clear existing records in strict dependency order to prevent foreign key errors
     ExamRecord.objects.all().delete()
@@ -26,13 +26,13 @@ def stage_demo_environment():
     ClassStream.objects.all().delete()
     Teacher.objects.all().delete()
 
-    print("👥 Seeding professional Kabiero ACADEMY faculty profiles...")
+    print("👥 Seeding professional Educlique ACADEMY faculty profiles...")
     # 2. Seed Teacher Profiles
     teacher_one = Teacher.objects.create(
         tsc_number="TSC-889922",
         first_name="Ezekiel",
         last_name="Mutua",
-        email="ezekiel.mutua@kabiero.ac.ke",
+        email="ezekiel.mutua@Educlique.ac.ke",
         phone_number="+254711002233",
         is_class_teacher=True
     )
@@ -41,7 +41,7 @@ def stage_demo_environment():
         tsc_number="TSC-114455",
         first_name="Sarah",
         last_name="Omwamba",
-        email="sarah.omwamba@kabiero.ac.ke",
+        email="sarah.omwamba@Educlique.ac.ke",
         phone_number="+254722998877",
         is_class_teacher=True
     )
@@ -128,7 +128,7 @@ def stage_demo_environment():
     ExamRecord.objects.create(student=student_records['103'], subject=math, term='TERM_2', year=2026, cat_1=11.0, cat_2=10.0, final_exam=54.0)  # Total: 75.0% (Variance: +1.0%)
 
     print("\n==================================================================")
-    print("✅ Kabiero ACADEMY DEMO SYSTEM INSTANTLY LOADED WITH MASTER DATA!")
+    print("✅ Educlique ACADEMY DEMO SYSTEM INSTANTLY LOADED WITH MASTER DATA!")
     print(f"   🔹 Registered Teachers: {Teacher.objects.count()}")
     print(f"   🔹 Formatted Streams:  {ClassStream.objects.count()}")
     print(f"   🔹 Active Students:    {Student.objects.count()}")
