@@ -16,7 +16,7 @@
             min-height: 100vh;
         }
         body::before {
-            content: 'Educlique ACADEMY';
+            content: 'ST FRANCISCO KABIERO ACADEMY';
             position: fixed;
             top: 50%;
             left: 50%;
@@ -125,10 +125,10 @@ function downloadPDF() {
 <div class="receipt-container shadow-sm">
     <div class="receipt-header">
         <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Google_Keep_icon_%282023%29.svg/512px-Google_Keep_icon_%282023%29.svg.png"
-             alt="Educlique Academy Logo"
+             alt="Kabiero Academy crest"
              class="school-logo"
              onerror="this.style.display='none'">
-        <h2 class="fw-bold uppercase tracking-wide mb-1" style="color: #1B4332;">Educlique ACADEMY</h2>
+        <h2 class="fw-bold uppercase tracking-wide mb-1" style="color: #0b2b5e;">ST FRANCISCO KABIERO ACADEMY</h2>
         <p class="text-muted small uppercase fw-semibold mb-0">P.O. Box 4500 - 00100, Nairobi, Kenya · Tel: +254 700 000 000</p>
         <div class="mt-3">
             <span class="status-badge status-{{ receipt.status|lower }}">
@@ -215,7 +215,7 @@ function downloadPDF() {
         <div class="col-md-6">
             <div class="p-3 rounded-3 border bg-success bg-opacity-10 border-success">
                 <strong class="d-block small text-secondary">Receipt Issued By</strong>
-                <span class="text-dark fw-semibold">Educlique Academy Bursar</span>
+                <span class="text-dark fw-semibold">Kabiero Academy Bursar</span>
                 <span class="text-muted small d-block mt-1">Automated Receipt System</span>
             </div>
         </div>
@@ -224,7 +224,7 @@ function downloadPDF() {
 
     <div class="footer-box">
         <p class="mb-1 fw-semibold text-dark">This is an official school receipt. Keep it for your records.</p>
-        <p class="mb-0 small">For queries, contact accounts@Educlique.sc.ke or visit the school bursar office.</p>
+        <p class="mb-0 small">For queries, contact academykabiero@gmail.com or visit the school bursar office.</p>
         <div class="mt-2" style="font-size: 0.75rem; color: #94a3b8;">
             Receipt generated on {{ today|date:"Y-m-d H:i" }} | System ID: {{ receipt.id }}
         </div>

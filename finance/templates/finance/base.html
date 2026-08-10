@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Educlique Academy Portal{% endblock %}</title>
+    {% load static %}
+    <title>{% block title %}St Francisco Kabiero Academy Portal{% endblock %}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -131,7 +132,7 @@
     <button class="hamburger-btn" id="sidebarToggle" aria-label="Open menu">
         <i class="bi bi-list"></i>
     </button>
-    <span class="brand-text"><i class="bi bi-mortarboard-fill text-primary me-1"></i> Educlique</span>
+    <span class="brand-text">Kabiero Academy</span>
     <span style="width:32px;"></span>
 </div>
 
@@ -142,8 +143,8 @@
     <aside class="sidebar-panel no-print" id="sidebarPanel">
         <div class="sidebar-brand">
             <a class="text-decoration-none fw-bold d-flex align-items-center gap-2 text-white" href="{% url 'executive_kpis' %}">
-                <i class="bi bi-mortarboard-fill text-primary fs-4"></i>
-                <span style="letter-spacing:0.05em;font-size:0.9rem;">Educlique</span>
+                <img src="{% static 'finance/images/kabiero-academy-crest.png' %}" alt="Kabiero Academy crest" style="width:34px;height:34px;object-fit:contain;">
+                <span style="letter-spacing:0.05em;font-size:0.82rem;">Kabiero Academy</span>
             </a>
         </div>
 

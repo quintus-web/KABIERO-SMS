@@ -11,7 +11,7 @@ python manage.py collectstatic --noinput --verbosity 0 --skip-checks
 echo "=== Running database migrations ==="
 python manage.py migrate --noinput --skip-checks
 
-echo "=== Seeding student data ==="
-python manage.py seed_data --skip-checks
+echo "=== Applying Kabiero Academy starter configuration ==="
+python manage.py bootstrap_kabiero --skip-checks
 
 echo "=== Build complete ==="

@@ -3,7 +3,9 @@ from django.core.management.base import BaseCommand
 from finance.models import Student, ClassStream, FeeInvoice
 from django.utils import timezone
 
-VALID_GRADES = ["Playgroup", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
+from finance.school_config import CBC_LEVELS
+
+VALID_GRADES = CBC_LEVELS
 
 
 def get_next_grade(current_grade_name):
@@ -19,7 +21,7 @@ def get_next_grade(current_grade_name):
 
 
 class Command(BaseCommand):
-    help = "Promotes all active students to the next grade level. Grade 6 students are marked as graduated."
+    help = "Promotes all active students to the next grade level. Grade 9 students are marked as graduated."
 
     def handle(self, *args, **options):
         active_students = Student.objects.filter(status='ACTIVE', is_active=True).exclude(class_stream__isnull=True)
@@ -35,7 +37,7 @@ class Command(BaseCommand):
                 skipped_count += 1
                 continue
 
-            if current_grade == "Grade 6":
+            if current_grade == "Grade 9":
                 student.status = 'GRADUATED'
                 student.is_active = False
                 student.class_stream = None

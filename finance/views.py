@@ -26,6 +26,7 @@ from .models import (
     DisciplineReport, LeaveApplication, SchoolHoliday
 )
 from django.contrib.auth.models import User
+from .school_config import CBC_LEVELS, SCHOOL_SHORT_NAME
 
 CORE_SUBJECTS = [
     ("Mathematics", "MAT101"),
@@ -40,13 +41,13 @@ CORE_SUBJECTS = [
     ("Agriculture", "AGR101"),
 ]
 
-VALID_GRADES = ["Playgroup", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
+VALID_GRADES = CBC_LEVELS
 
 
 def _default_admin_credentials():
     return (
-        os.environ.get('DEFAULT_ADMIN_USERNAME', 'admin'),
-        os.environ.get('DEFAULT_ADMIN_PASSWORD', 'sms_pass2026'),
+        os.environ.get('DEFAULT_ADMIN_USERNAME', 'Kabiero'),
+        os.environ.get('DEFAULT_ADMIN_PASSWORD', 'Kabiero-ChangeMe-2026!'),
     )
 
 
@@ -109,7 +110,7 @@ class LiveCSVStudent:
 def _load_students_from_csv():
     """Reads foundational tracking records from local project workspace directory."""
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    csv_path = os.path.join(base_dir, "Educlique School - STUDENTS.csv")
+    csv_path = os.path.join(base_dir, "Kabiero Academy - STUDENTS.csv")
 
     students = []
     if os.path.exists(csv_path):
@@ -497,7 +498,7 @@ def collect_fee_payment(request, student_id):
                 year=2026,
                 title=f"{student.class_stream.name if student.class_stream else 'Unassigned'} {term.replace('_', ' ')} Invoice 2026",
                 amount=invoice_amount,
-                description="Auto-generated from Educlique Fee Structure 2026"
+                description=f"Auto-generated from {SCHOOL_SHORT_NAME} fee structure"
             )
 
         FeeReceipt.objects.create(
@@ -753,7 +754,7 @@ def teacher_sms_broadcast(request):
         
         username = request.POST.get("username", "").strip()
         api_key = request.POST.get("api_key", "").strip()
-        sender_id = request.POST.get("sender_id", "Educlique").strip()
+        sender_id = request.POST.get("sender_id", "Kabiero").strip()
         
         if not username or not api_key:
             messages.error(request, "Africa's Talking credentials required in session settings.")
@@ -1214,7 +1215,7 @@ def delete_student_record(request, student_id):
 
 @login_required
 def grade_promotion_dashboard(request):
-    VALID_GRADES = ["Playgroup", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
+    VALID_GRADES = CBC_LEVELS
     grade_summary = []
     for grade in VALID_GRADES:
         count = Student.objects.filter(status='ACTIVE', is_active=True, class_stream__name=grade).count()
@@ -1241,12 +1242,12 @@ def grade_promotion_dashboard(request):
                 promotion_details.append({'student': student, 'action': 'Skipped', 'reason': 'No higher grade available'})
                 continue
 
-            if current_grade == "Grade 6":
+            if current_grade == "Grade 9":
                 student.status = 'GRADUATED'
                 student.is_active = False
                 student.class_stream = None
                 graduated_count += 1
-                promotion_details.append({'student': student, 'action': 'Graduated', 'reason': 'Completed Grade 6'})
+                promotion_details.append({'student': student, 'action': 'Graduated', 'reason': 'Completed Grade 9'})
             else:
                 next_grade = VALID_GRADES[idx + 1]
                 new_stream, _ = ClassStream.objects.get_or_create(name=next_grade)
