@@ -26,7 +26,7 @@ from .models import (
     DisciplineReport, LeaveApplication, SchoolHoliday
 )
 from django.contrib.auth.models import User
-from .school_config import CBC_LEVELS, SCHOOL_SHORT_NAME
+from .school_config import CBC_LEVELS, SCHOOL_SHORT_NAME, STUDENT_CAPACITY
 
 CORE_SUBJECTS = [
     ("Mathematics", "MAT101"),
@@ -309,7 +309,9 @@ def student_registry_workstation(request):
 
     return render(request, "finance/learners.html", {
         "students": students,
-        "selected_stream": selected_stream
+        "selected_stream": selected_stream,
+        "student_capacity": STUDENT_CAPACITY,
+        "active_student_count": Student.objects.filter(status='ACTIVE', is_active=True).count(),
     })
 
 
@@ -2036,6 +2038,11 @@ def bulk_balance_import(request):
 def add_new_student_onboarding(request):
     """Handles new student enrollment form submission"""
     if request.method == 'POST':
+        active_student_count = Student.objects.filter(status='ACTIVE', is_active=True).count()
+        if active_student_count >= STUDENT_CAPACITY:
+            messages.error(request, f"Enrolment limit reached: Kabiero Academy can have up to {STUDENT_CAPACITY} active learners. Mark a learner inactive or increase the limit before adding another.")
+            return redirect('student_registry')
+
         admission_number = request.POST.get('admission_number')
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')

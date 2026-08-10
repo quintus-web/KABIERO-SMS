@@ -3,6 +3,10 @@
 {% block title %}Learner Registry - Educlique Academy{% endblock %}
 
 {% block content %}
+<div class="alert alert-info border-0 shadow-sm d-flex justify-content-between align-items-center mb-4">
+    <span><i class="bi bi-people-fill me-2"></i><strong>Enrolment capacity</strong></span>
+    <span>{{ active_student_count }} / {{ student_capacity }} active learners</span>
+</div>
 <div class="page-header d-flex flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
     <div>
         <h3 class="fw-bold text-dark mb-0">Learner Registry</h3>
