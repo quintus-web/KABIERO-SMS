@@ -32,7 +32,7 @@
         <i class="bi bi-person-badge-fill"></i>
     </div>
     <h2>Parent Security Access</h2>
-    <p class="subtitle">Please provide your registered mobile line alongside your official National ID Card Number.</p>
+    <p class="subtitle">Enter your registered mobile number, full name as it appears on the student record, and your 4-6 digit portal PIN.</p>
 
     <!-- Feedback Alerts Display -->
     {% if messages %}
@@ -55,12 +55,21 @@
             </div>
         </div>
 
-        <!-- 2. Parent National ID Card Input -->
+        <!-- 2. Guardian Full Name -->
+        <div class="mb-3.5">
+            <label class="form-label">Guardian Full Name</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                <input type="text" name="guardian_name" class="form-control" placeholder="e.g. David Kipchirchir" required autocomplete="off">
+            </div>
+        </div>
+
+        <!-- 3. Portal PIN -->
         <div class="mb-4">
-            <label class="form-label">National ID Number</label>
+            <label class="form-label">Portal PIN</label>
             <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-shield-check-fill"></i></span>
-                <input type="text" name="parent_id_number" class="form-control" placeholder="e.g. 24681012" required autocomplete="off">
+                <input type="password" name="guardian_pin" class="form-control" placeholder="4-6 digit PIN" required autocomplete="off">
             </div>
         </div>
 

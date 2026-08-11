@@ -1,6 +1,7 @@
 # finance/models.py
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
 
 class ClassStream(models.Model):
@@ -66,6 +67,7 @@ class Student(models.Model):
 
     guardian_name = models.CharField(max_length=100)
     guardian_relation = models.CharField(max_length=50, default="Parent")
+    guardian_pin = models.CharField(max_length=128, blank=True, null=True)
     parent_phone = models.CharField(max_length=15)
     parent_email = models.EmailField(blank=True, null=True)
     emergency_contact_name = models.CharField(max_length=100, blank=True, null=True)

@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
+from django.core.exceptions import ImproperlyConfigured
 
 from finance.models import ClassStream, FeeStructure
 from finance.school_config import CBC_LEVELS, DEFAULT_FEE_AMOUNT
@@ -21,12 +22,15 @@ class Command(BaseCommand):
                     defaults={"amount": Decimal(DEFAULT_FEE_AMOUNT)},
                 )
 
-        username = __import__('os').environ.get('DEFAULT_ADMIN_USERNAME', 'Kabiero')
-        password = __import__('os').environ.get('DEFAULT_ADMIN_PASSWORD', 'Kabiero-ChangeMe-2026!')
+        username = __import__('os').environ.get('DEFAULT_ADMIN_USERNAME')
+        password = __import__('os').environ.get('DEFAULT_ADMIN_PASSWORD')
+        if not username or not password:
+            raise ImproperlyConfigured("DEFAULT_ADMIN_USERNAME and DEFAULT_ADMIN_PASSWORD must be set in the environment.")
         user, created = User.objects.get_or_create(username=username)
         user.is_superuser = True
         user.is_staff = True
         user.is_active = True
+        user.email = user.email or 'admin@admin.com'
         user.set_password(password)
         user.save()
         self.stdout.write(self.style.SUCCESS(

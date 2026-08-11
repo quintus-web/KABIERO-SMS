@@ -11,7 +11,7 @@ env_file = os.path.join(BASE_DIR, '.env')
 if os.path.exists(env_file):
     environ.Env.read_env(env_file)
 
-SECRET_KEY = env('SECRET_KEY', default='django-insecure-ypx*^vy2-%wj23lotuzn-ngd!jluip-*)^=vhq#%4dzsojhm2v')
+SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool('DEBUG', default=False)
 
 def _csv_env(name, default=''):
@@ -19,7 +19,7 @@ def _csv_env(name, default=''):
 
 RENDER_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '').strip()
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.50']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.50', 'testserver']
 if RENDER_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_HOSTNAME)
 ALLOWED_HOSTS += _csv_env('ALLOWED_HOSTS')
@@ -105,11 +105,17 @@ LOGIN_REDIRECT_URL = '/portal/executive-kpis/'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 3600
 SESSION_COOKIE_HTTPONLY = True
-CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SECURE = bool(RENDER_HOSTNAME)
-SESSION_COOKIE_SECURE = bool(RENDER_HOSTNAME)
-CSRF_COOKIE_SAMESITE = 'None' if RENDER_HOSTNAME else 'Lax'
-SESSION_COOKIE_SAMESITE = 'None' if RENDER_HOSTNAME else 'Lax'
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SAMESITE = 'Lax' if not DEBUG else 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax' if not DEBUG else 'Lax'
+SECURE_SSL_REDIRECT = not DEBUG
+SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+SECURE_HSTS_PRELOAD = not DEBUG
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 LOGGING = {

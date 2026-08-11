@@ -3,6 +3,7 @@ import os
 import csv
 from decimal import Decimal
 from django.core.management.base import BaseCommand
+from django.core.exceptions import ImproperlyConfigured
 from django.contrib.auth.models import User
 from finance.models import Student, ClassStream, Subject, FeeStructure, FeeInvoice, StaffProfile
 
@@ -140,8 +141,10 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.WARNING("Data file not found, skipping student seed"))
 
-        admin_username = os.environ.get('DEFAULT_ADMIN_USERNAME', 'admin')
-        admin_password = os.environ.get('DEFAULT_ADMIN_PASSWORD', 'sms_pass2026')
+        admin_username = os.environ.get('DEFAULT_ADMIN_USERNAME')
+        admin_password = os.environ.get('DEFAULT_ADMIN_PASSWORD')
+        if not admin_username or not admin_password:
+            raise ImproperlyConfigured("DEFAULT_ADMIN_USERNAME and DEFAULT_ADMIN_PASSWORD must be set in the environment.")
         user, _ = User.objects.get_or_create(
             username=admin_username,
             defaults={

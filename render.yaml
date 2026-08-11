@@ -21,7 +21,7 @@
       - key: DEFAULT_ADMIN_USERNAME
         value: "admin"
       - key: DEFAULT_ADMIN_PASSWORD
-        value: "sms_pass2026"
+        generateValue: true
     databases:
       - name: school-db
         plan: free

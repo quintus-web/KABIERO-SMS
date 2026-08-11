@@ -13,4 +13,4 @@ CBC_LEVELS = [
 ]
 
 DEFAULT_FEE_AMOUNT = "0.00"  # Replace through the Fee Structure screen when rates are approved.
-STUDENT_CAPACITY = 200  # Whole-school active enrolment limit.
+STUDENT_CAPACITY = 300  # Whole-school active enrolment limit.

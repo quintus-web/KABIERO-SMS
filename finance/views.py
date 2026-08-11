@@ -2,16 +2,18 @@
 import os
 import csv
 import datetime
+import secrets
 from decimal import Decimal
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, Http404, HttpResponse
 from django.contrib import messages
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.db.models import Sum, Count, Q
-from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.hashers import check_password
 
 from .models import (
     Student, ClassStream, Subject, FeeStructure,
@@ -42,25 +44,6 @@ CORE_SUBJECTS = [
 ]
 
 VALID_GRADES = CBC_LEVELS
-
-
-def _default_admin_credentials():
-    return (
-        os.environ.get('DEFAULT_ADMIN_USERNAME', 'Kabiero'),
-        os.environ.get('DEFAULT_ADMIN_PASSWORD', 'Kabiero-ChangeMe-2026!'),
-    )
-
-
-def _ensure_default_admin_user():
-    username, password = _default_admin_credentials()
-    user, _ = User.objects.get_or_create(username=username)
-    user.is_superuser = True
-    user.is_staff = True
-    user.is_active = True
-    user.email = user.email or 'admin@admin.com'
-    user.set_password(password)
-    user.save()
-    return username, password
 
 
 def _get_subjects():
@@ -1484,17 +1467,13 @@ def staff_login_view(request):
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
         password = request.POST.get("password", "")
-        default_username, _ = _default_admin_credentials()
-        if username == default_username:
-            _ensure_default_admin_user()
-
         user = authenticate(request, username=username, password=password)
         if user:
             login(request, user)
             request.session["role"] = target_role
 
             next_url = request.GET.get('next', '')
-            if next_url:
+            if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
                 return redirect(next_url)
 
             if user.is_superuser:
@@ -1521,8 +1500,9 @@ def staff_logout_view(request):
 
 
 @login_required
-@login_required
 def developer_debug_console_hub(request):
+    if not request.user.is_superuser:
+        raise Http404
     if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         action = request.POST.get('action')
         if action == 'inject_mock_data':
@@ -1549,7 +1529,7 @@ def developer_debug_console_hub(request):
             for s in staff_data:
                 u, created = User.objects.get_or_create(username=s["username"], defaults={"first_name": s["first"], "last_name": s["last"]})
                 if created:
-                    u.set_password("sms_pass2026")
+                    u.set_password(secrets.token_urlsafe(16))
                     u.save()
                     StaffProfile.objects.get_or_create(user=u, employee_number=s["num"], defaults={"role_designation": s["role"], "base_salary_kes": s["sal"], "specialization": s["spec"], "current_status": "ACTIVE"})
             maths_sub, _ = Subject.objects.get_or_create(name="Mathematics", defaults={"code": "MAT101"})
@@ -1565,10 +1545,6 @@ def developer_debug_console_hub(request):
                 TimetableSlot.objects.get_or_create(stream=alpha, subject=maths_sub, teacher=teacher_profile, day="WED", defaults={"time_start": "10:40:00", "time_end": "11:20:00"})
             LearningMaterial.objects.get_or_create(subject=maths_sub, title="Form 1 Revision Kit", defaults={"material_type": "NOTES", "resource_url": "https://drive.google.com/file/d/sample"})
             return JsonResponse({"status": "success", "message": "Injected data successfully!"})
-        if action == 'purge_all_data':
-            for model in [DisciplineReport, Student, ClassStream, FeeInvoice, FeeReceipt, StaffProfile, HomeworkAssignment, SchoolAnnouncement, SchoolAsset, AssetMaintenanceLog, LessonPlan, LearningMaterial, TimetableSlot]:
-                model.objects.all().delete()
-            return JsonResponse({"status": "success", "message": "Database cleared successfully!"})
     context = {
         'total_students': Student.objects.count(),
         'total_streams': ClassStream.objects.count(),
@@ -1674,38 +1650,69 @@ def generate_report_card_view(request, student_id):
 
 
 def parent_portal_gateway(request):
-    """Securely authenticates parents and streams live records directly into the tabbed dashboard panels"""
+    """Authenticates parents via exact guardian name + phone + PIN and streams live records into the dashboard."""
+    parent_student_id = request.session.get('parent_student_id')
+    if parent_student_id:
+        try:
+            student = Student.objects.get(id=parent_student_id, is_active=True)
+        except Student.DoesNotExist:
+            request.session.pop('parent_student_id', None)
+            parent_student_id = None
+
+    if parent_student_id:
+        student = Student.objects.get(id=parent_student_id, is_active=True)
+        invoices = student.fee_invoices.all().order_by('-date_issued')
+        receipts = student.fee_receipts.filter(status='COMPLETED').order_by('-date_paid')
+        exam_records = ExamRecord.objects.filter(student=student, year=2026).select_related('subject')
+        homework_list = HomeworkAssignment.objects.filter(stream=student.class_stream).select_related('subject')
+        announcements = SchoolAnnouncement.objects.filter(
+            Q(target_audience='ALL_PARENTS') | Q(target_audience='ALL_STUDENTS')
+        ).order_by('-date_published')[:5]
+        attendance_logs = student.attendance.all().order_by('-date')[:10] if hasattr(student, 'attendance') else []
+        context = {
+            'student': student,
+            'invoices': invoices,
+            'receipts': receipts,
+            'exam_records': exam_records,
+            'attendance_logs': attendance_logs,
+            'homework_list': homework_list,
+            'announcements': announcements,
+            'balance': student.current_balance
+        }
+        return render(request, 'finance/parent_dashboard.html', context)
+
     if request.method == 'POST':
         phone_no = request.POST.get('parent_phone', '').strip()
-        parent_id = request.POST.get('parent_id_number', '').strip()
-        
+        guardian_name = request.POST.get('guardian_name', '').strip()
+        guardian_pin = request.POST.get('guardian_pin', '').strip()
+
+        if not phone_no or not guardian_name or not guardian_pin:
+            messages.error(request, "All fields are required.")
+            return redirect('parent_portal_gateway')
+
         matching_students = Student.objects.filter(parent_phone=phone_no, is_active=True)
-        
         student = None
         for candidate in matching_students:
-            if parent_id in candidate.guardian_name:
+            if candidate.guardian_name == guardian_name and candidate.guardian_pin and check_password(guardian_pin, candidate.guardian_pin):
                 student = candidate
                 break
-                
+
         if student is not None:
+            request.session['parent_student_id'] = student.id
+            request.session.set_expiry(3600)
             invoices = student.fee_invoices.all().order_by('-date_issued')
             receipts = student.fee_receipts.filter(status='COMPLETED').order_by('-date_paid')
-            
             exam_records = ExamRecord.objects.filter(student=student, year=2026).select_related('subject')
-            
             homework_list = HomeworkAssignment.objects.filter(stream=student.class_stream).select_related('subject')
-            
             announcements = SchoolAnnouncement.objects.filter(
                 Q(target_audience='ALL_PARENTS') | Q(target_audience='ALL_STUDENTS')
             ).order_by('-date_published')[:5]
-            
             attendance_logs = student.attendance.all().order_by('-date')[:10] if hasattr(student, 'attendance') else []
-            
             context = {
-                'student': student, 
-                'invoices': invoices, 
+                'student': student,
+                'invoices': invoices,
                 'receipts': receipts,
-                'exam_records': exam_records, 
+                'exam_records': exam_records,
                 'attendance_logs': attendance_logs,
                 'homework_list': homework_list,
                 'announcements': announcements,
@@ -1713,10 +1720,15 @@ def parent_portal_gateway(request):
             }
             return render(request, 'finance/parent_dashboard.html', context)
         else:
-            messages.error(request, "Access Denied: No active student account is verified with that Phone line and National ID pairing.")
+            messages.error(request, "Access Denied: Invalid credentials. Please verify your details and try again.")
             return redirect('parent_portal_gateway')
-            
+
     return render(request, 'finance/parent_gateway_login.html')
+
+
+def parent_logout_view(request):
+    request.session.pop('parent_student_id', None)
+    return redirect('parent_portal_gateway')
 
 
 @login_required

@@ -3,14 +3,8 @@ import os
 import django
 from decimal import Decimal
 
-# Initialize the Django environment context configuration
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'school_management_system.settings')
-try:
-    django.setup()
-except ModuleNotFoundError:
-    # Fallback in case your core folder name matches the interior app settings directory
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sms_core.settings')
-    django.setup()
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sms_core.settings')
+django.setup()
 
 from finance.models import Teacher, ClassStream, Subject, Student, FeeInvoice, ExamRecord, FeeReceipt
 

@@ -50,6 +50,7 @@ urlpatterns = [
     
     # ── EXTERNAL PARENT GATEWAY SYSTEM ──
     path('parent-portal/', views.parent_portal_gateway, name='parent_portal_gateway'),
+    path('parent-portal/logout/', views.parent_logout_view, name='parent_logout'),
     
     # ── ROUTINE ASSET LOGISTICS NODES & ATTENDANCE TRACKERS ──
     path('logistics/attendance-deck/', views.global_attendance_control_deck, name='attendance_deck'),
