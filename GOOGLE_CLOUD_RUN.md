@@ -7,8 +7,8 @@ Cloud Run containers are temporary. Use PostgreSQL on Cloud SQL; do not use `db.
 3. Build and deploy (replace `PROJECT_ID`, `REGION`, `INSTANCE`, and `CLOUD_RUN_HOST`):
 
 ```powershell
-gcloud builds submit --tag gcr.io/PROJECT_ID/kabiero-academy
-gcloud run deploy kabiero-academy --image gcr.io/PROJECT_ID/kabiero-academy --region REGION --allow-unauthenticated --add-cloudsql-instances PROJECT_ID:REGION:INSTANCE --set-env-vars "DEFAULT_ADMIN_USERNAME=Kabiero,ALLOWED_HOSTS=CLOUD_RUN_HOST" --set-secrets "SECRET_KEY=SECRET_KEY:latest,DATABASE_URL=DATABASE_URL:latest,DEFAULT_ADMIN_PASSWORD=DEFAULT_ADMIN_PASSWORD:latest"
+gcloud builds submit --tag us-central1-docker.pkg.dev/PROJECT_ID/kabiero-sms/kabiero-sms:latest
+gcloud run deploy kabiero-sms --image us-central1-docker.pkg.dev/PROJECT_ID/kabiero-sms/kabiero-sms:latest --region REGION --allow-unauthenticated --add-cloudsql-instances PROJECT_ID:REGION:INSTANCE --set-env-vars "DEFAULT_ADMIN_USERNAME=admin,ALLOWED_HOSTS=CLOUD_RUN_HOST" --set-secrets "SECRET_KEY=SECRET_KEY:latest,DATABASE_URL=DATABASE_URL:latest,DEFAULT_ADMIN_PASSWORD=DEFAULT_ADMIN_PASSWORD:latest"
 ```
 
 4. Before first use, run migrations and the empty-school bootstrap once. Create a Cloud Run Job from the same image, with the same Cloud SQL and secret settings, then run:
@@ -18,4 +18,10 @@ python manage.py migrate --noinput
 python manage.py bootstrap_kabiero
 ```
 
-The account is `Kabiero`; use the password stored in Secret Manager, then change it after the first login. When using a custom domain, add it to `ALLOWED_HOSTS` and add its complete `https://` URL to `CSRF_TRUSTED_ORIGINS`.
+Create the superuser:
+
+```powershell
+python manage.py createsuperuser --noinput --username=admin --email=admin@kabiero.ac.ke
+```
+
+Set the password via the Django admin or shell after deployment. When using a custom domain, add it to `ALLOWED_HOSTS` and add its complete `https://` URL to `CSRF_TRUSTED_ORIGINS`.
