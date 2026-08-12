@@ -9,27 +9,46 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
     <style>
-        
+        :root {
+            --navy: #0a1628;
+            --blue-accent: #2563eb;
+            --surface: #ffffff;
+            --bg: #f1f5f9;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --radius-sm: 10px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+        }
+
+        * { -webkit-tap-highlight-color: transparent; }
+        html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #f1f5f9;
-            color: #0f172a;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
 
         /* ── NAVBAR ── */
         .portal-nav {
-            background-color: #0a1628;
-            border-bottom: 3px solid #2563eb;
-            padding: 1rem 1.5rem;
+            background-color: var(--navy);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding: 0.85rem 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 1020;
         }
 
-        /* ── PROFILE PROFILE BANNER ── */
+        /* ── HERO BANNER ── */
         .student-hero {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            border-radius: 20px;
+            border-radius: var(--radius-lg);
             color: #ffffff;
-            padding: 2.5rem;
-            margin-bottom: 2rem;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
             box-shadow: 0 10px 25px rgba(15, 23, 42, 0.05);
             position: relative;
             overflow: hidden;
@@ -39,47 +58,50 @@
             content: '';
             position: absolute;
             right: -20px; bottom: -20px;
-            width: 180px; height: 180px;
-            background: rgba(37, 99, 235, 0.1);
+            width: 160px; height: 160px;
+            background: rgba(37, 99, 235, 0.12);
             border-radius: 50%;
         }
 
         .student-avatar {
-            width: 72px;
-            height: 72px;
+            width: 64px;
+            height: 64px;
             border-radius: 50%;
-            background-color: #2563eb;
+            background-color: var(--blue-accent);
             color: #ffffff;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: 700;
             border: 3px solid rgba(255, 255, 255, 0.2);
             font-family: 'Syne', sans-serif;
+            flex-shrink: 0;
         }
 
-        /* ── METRIC STAT TILES ── */
+        /* ── STAT TILES ── */
         .stat-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 1.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.1rem;
             display: flex;
             align-items: center;
-            gap: 1.25rem;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01);
+            gap: 1rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
             height: 100%;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+        .stat-card:active { transform: scale(0.98); }
 
         .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             flex-shrink: 0;
         }
 
@@ -87,31 +109,39 @@
         .stat-icon.success { background-color: #f0fdf4; color: #22c55e; }
         .stat-icon.primary { background-color: #eff6ff; color: #2563eb; }
 
-        /* ── INTERACTIVE TAB INTERFACES ── */
+        /* ── TABS ── */
         .nav-tabs-custom {
-            border-bottom: 2px solid #e2e8f0;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+            gap: 0.25rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 2px;
         }
 
         .nav-tabs-custom .nav-link {
             border: none;
-            color: #64748b;
+            color: var(--text-muted);
             font-weight: 600;
-            font-size: 0.92rem;
-            padding: 0.75rem 1.25rem;
-            border-radius: 8px 8px 0 0;
+            font-size: 0.88rem;
+            padding: 0.7rem 1rem;
+            border-radius: var(--radius-sm) var(--radius-sm) 0 0;
             position: relative;
             transition: all 0.2s ease;
+            white-space: nowrap;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
         }
 
         .nav-tabs-custom .nav-link:hover {
-            color: #2563eb;
+            color: var(--blue-accent);
             background-color: rgba(37, 99, 235, 0.04);
         }
 
         .nav-tabs-custom .nav-link.active {
-            color: #2563eb;
+            color: var(--blue-accent);
             background: transparent;
         }
 
@@ -120,33 +150,44 @@
             position: absolute;
             bottom: -2px; left: 0; right: 0;
             height: 3px;
-            background-color: #2563eb;
+            background-color: var(--blue-accent);
             border-radius: 3px;
         }
 
+        /* ── CONTENT PANELS ── */
         .card-table-wrap {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
             overflow: hidden;
-            padding: 1.5rem;
+            padding: 1.25rem;
         }
 
         .badge-status {
             padding: 6px 12px;
             border-radius: 100px;
             font-weight: 600;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             text-transform: uppercase;
             letter-spacing: 0.02em;
         }
 
+        /* ── MOBILE ── */
         @media (max-width: 768px) {
             .student-hero { padding: 1.5rem; text-align: center; }
             .student-hero .d-flex { flex-direction: column; align-items: center; gap: 1rem !important; }
-            .nav-tabs-custom { display: flex; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
-            .nav-tabs-custom .nav-link { white-space: nowrap; }
+            .stat-card { padding: 1rem; }
+            .stat-icon { width: 40px; height: 40px; font-size: 1.1rem; }
+            .card-table-wrap { padding: 1rem; }
+            .table { font-size: 0.88rem; }
+            .table thead th { font-size: 0.72rem; }
+            .btn-sm { min-height: 40px; }
+            .container-xl { padding-left: 1rem; padding-right: 1rem; }
+        }
+
+        @media (min-width: 769px) {
+            .student-hero { padding: 2.5rem; }
         }
     </style>
 </head>

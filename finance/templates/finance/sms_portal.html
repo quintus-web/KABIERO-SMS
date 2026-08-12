@@ -1,43 +1,84 @@
 {% extends 'finance/base.html' %}
 {% block content %}
-<div class="row g-4">
+<div class="page-header d-flex flex-md-row justify-content-between align-items-md-center gap-2 mb-3 no-print">
+    <div>
+        <h3 class="fw-bold text-dark mb-0">Fee Alerts Sender</h3>
+        <p class="text-muted small fw-semibold mb-0" style="font-size:0.72rem;">AUTOMATED SMS DEFAULTERS BROADCAST</p>
+    </div>
+    <div class="header-actions">
+        <form method="POST" class="d-inline">{% csrf_token %}
+            <button type="submit" class="btn btn-danger fw-bold" {% if not defaulters %}disabled{% endif %}>
+                <i class="bi bi-chat-left-text-fill me-1"></i>Blast Bulk SMS Alerts
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
     <div class="col-md-4">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-dark text-white fw-bold">Fee Alerts Sender</div>
-            <div class="card-body">
-                <div class="alert alert-warning text-center">
-                    <small class="text-muted d-block">TOTAL ACTIVE DEFAULTERS</small>
-                    <h3 class="fw-bold text-dark mb-0">{{ defaulters|length }} Accounts</h3>
-                </div>
-                {% if messages %}{% for m in messages %}<div class="alert alert-success small">{{ m }}</div>{% endfor %}{% endif %}
-                <form method="POST">{% csrf_token %}
-                    <button type="submit" class="btn btn-danger w-100 fw-bold py-2" {% if not defaulters %}disabled{% endif %}>
-                        <i class="bi bi-chat-left-text-fill me-2"></i>Blast Bulk SMS Alerts
-                    </button>
-                </form>
+        <div class="stat-card">
+            <div class="stat-icon danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div>
+                <span class="text-muted small d-block fw-medium">Active Defaulters</span>
+                <strong class="fs-4 fw-bold text-dark">{{ defaulters|length }} <span class="fw-medium" style="font-size:0.85rem;font-weight:600;">Accounts</span></strong>
             </div>
         </div>
     </div>
     <div class="col-md-8">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white fw-bold text-secondary">Target Recipient Queue</div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0 small">
-                    <thead class="table-light"><tr><th>Student Details</th><th>Parent Phone</th><th class="text-end">Arrears</th></tr></thead>
-                    <tbody>
-                        {% for row in defaulters %}
-                        <tr>
-                            <td><strong>{{ row.student.first_name }} {{ row.student.last_name }}</strong> (<code>{{ row.student.admission_number }}</code>)</td>
-                            <td>{{ row.parent_phone }}</td>
-                            <td class="text-end text-danger fw-bold">KES {{ row.balance|floatformat:2 }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="3" class="text-center py-4 text-muted">All client accounts are clear! Ledger balanced perfectly.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        {% if messages %}
+        {% for m in messages %}
+        <div class="alert alert-success border-0 shadow-sm small mb-0">{{ m }}</div>
+        {% endfor %}
+        {% endif %}
+    </div>
+</div>
+
+<!-- DESKTOP TABLE -->
+<div class="card card-custom desktop-table">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size:0.88rem;">
+            <thead class="table-light fw-bold" style="font-size:0.73rem;">
+                <tr>
+                    <th class="ps-4">Student Details</th>
+                    <th>Parent Phone</th>
+                    <th class="text-end">Arrears (KES)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in defaulters %}
+                <tr class="border-bottom">
+                    <td class="ps-4"><strong class="text-dark">{{ row.student.first_name }} {{ row.student.last_name }}</strong> <code class="text-muted">{{ row.student.admission_number }}</code></td>
+                    <td>{{ row.parent_phone }}</td>
+                    <td class="text-end fw-bold text-danger">{{ row.balance|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center py-5 text-muted">All client accounts are clear! Ledger balanced perfectly.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MOBILE CARD LIST -->
+<div class="mobile-card-list" style="display:none;">
+    {% for row in defaulters %}
+    <div class="card border-0 shadow-sm mb-2 p-3">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+                <div class="fw-bold text-dark" style="font-size:0.92rem;">{{ row.student.first_name }} {{ row.student.last_name }}</div>
+                <code class="text-muted" style="font-size:0.75rem;">{{ row.student.admission_number }}</code>
+                <div class="text-muted" style="font-size:0.78rem;"><i class="bi bi-telephone me-1"></i>{{ row.parent_phone }}</div>
             </div>
+            <div class="fw-bold text-danger" style="font-size:0.95rem;">KES {{ row.balance|floatformat:2 }}</div>
         </div>
     </div>
+    {% empty %}
+    <div class="card border-0 shadow-sm mb-2 p-4">
+        <div class="text-center py-4 text-muted">
+            <i class="bi bi-check-circle-fill text-success d-block mb-2" style="font-size:2rem;"></i>
+            <p class="mb-0 small fw-medium">All client accounts are clear! Ledger balanced perfectly.</p>
+        </div>
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}

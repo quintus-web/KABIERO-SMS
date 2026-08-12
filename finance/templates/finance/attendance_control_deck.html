@@ -4,12 +4,48 @@
 
 {% block content %}
 <style>
+    :root {
+        --navy: #0a1628;
+        --blue-accent: #2563eb;
+        --surface: #ffffff;
+        --bg: #f8fafc;
+        --text: #0f172a;
+        --text-muted: #64748b;
+        --border: #e2e8f0;
+        --radius-sm: 10px;
+        --radius-md: 14px;
+        --radius-lg: 20px;
+    }
+
+    * { -webkit-tap-highlight-color: transparent; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    body {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
     .att-row-absent  { background-color: #fff5f5 !important; border-left: 4px solid #dc3545 !important; }
     .att-row-present { background-color: #f0fff4 !important; border-left: 4px solid #198754 !important; }
     .att-card-absent  { background-color: #fff5f5 !important; border-left: 4px solid #dc3545 !important; }
     .att-card-present { background-color: #f0fff4 !important; border-left: 4px solid #198754 !important; }
-    .btn-mark { min-width: 90px; font-size: 0.82rem; font-weight: 600; }
-    @media (max-width: 768px) { .btn-mark { min-width: 0; flex: 1; } }
+    .btn-mark { min-height: 44px; font-size: 0.82rem; font-weight: 600; border-radius: var(--radius-sm); transition: all 0.2s ease; }
+    .btn-mark:active { transform: scale(0.96); }
+
+    /* Stat cards: stack 1 per row on mobile */
+    @media (max-width: 576px) {
+        .att-stat-col { flex: 0 0 100%; max-width: 100%; }
+    }
+
+    /* Attendance radio buttons: larger tap targets on mobile */
+    @media (max-width: 768px) {
+        .btn-mark { min-width: 0; flex: 1; padding: 0.6rem 0.5rem; }
+        .card-custom { border-radius: var(--radius-md); }
+        .container-fluid.p-0 > .row { margin-left: 0; margin-right: 0; }
+        .container-fluid.p-0 > .row > [class*="col-"] { padding-left: 0; padding-right: 0; }
+    }
 </style>
 
 <div class="container-fluid p-0">
@@ -34,19 +70,19 @@
 
     <!-- Stat Cards -->
     <div class="row g-2 mb-3">
-        <div class="col-4">
+        <div class="col-12 col-sm-4 att-stat-col">
             <div class="card border-0 shadow-sm p-2 p-md-3 text-center" style="border-top:3px solid #198754;">
                 <div class="fw-bold text-muted" style="font-size:0.65rem;">PRESENT</div>
                 <h3 class="fw-bold text-success mb-0">{{ total_present_students }}</h3>
             </div>
         </div>
-        <div class="col-4">
+        <div class="col-12 col-sm-4 att-stat-col">
             <div class="card border-0 shadow-sm p-2 p-md-3 text-center" style="border-top:3px solid #dc3545;">
                 <div class="fw-bold text-muted" style="font-size:0.65rem;">ABSENT</div>
                 <h3 class="fw-bold text-danger mb-0">{{ total_absent_students }}</h3>
             </div>
         </div>
-        <div class="col-4">
+        <div class="col-12 col-sm-4 att-stat-col">
             <div class="card border-0 shadow-sm p-2 p-md-3 text-center" style="border-top:3px solid #0d6efd;">
                 <div class="fw-bold text-muted" style="font-size:0.65rem;">STAFF IN</div>
                 <h3 class="fw-bold text-primary mb-0">{{ total_present_teachers }}</h3>

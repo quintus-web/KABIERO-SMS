@@ -2,70 +2,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Educlique Academy Portal Config</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Educlique Academy Portal Config</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <style>.portal-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important; transition: 0.2s; cursor: pointer; }</style>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --surface: #ffffff;
+            --bg: #f1f5f9;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius-sm: 10px;
+            --radius-md: 16px;
+            --radius-lg: 20px;
+        }
+
+        * { -webkit-tap-highlight-color: transparent; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .portal-container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+        /* ── BRAND ── */
+        .brand-header { text-align: center; margin-bottom: 2.5rem; }
+        .brand-header h1 { font-weight: 800; letter-spacing: -0.02em; }
+        .brand-header .brand-icon { font-size: 2rem; color: var(--primary); margin-bottom: 0.5rem; display: inline-block; }
+        .brand-header .subtitle { color: var(--text-muted); letter-spacing: 0.08em; font-size: 0.78rem; }
+
+        /* ── STAT TILES ── */
+        .stat-tile {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.04));
+            height: 100%;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-align: center;
+        }
+        .stat-tile:active { transform: scale(0.98); }
+        .stat-tile .stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; }
+        .stat-tile .stat-value { font-size: 1.5rem; font-weight: 800; margin: 0; line-height: 1.2; }
+        .stat-tile .stat-accent { width: 4px; height: 100%; position: absolute; left: 0; top: 0; border-radius: var(--radius-md) 0 0 var(--radius-md); }
+
+        /* ── PORTAL CARDS ── */
+        .portal-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.04));
+            transition: transform 0.25s cubic-bezier(0.32,0.72,0,1), box-shadow 0.25s ease;
+            height: 100%;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+        }
+        .portal-card:active { transform: scale(0.975); }
+        .portal-card .card-icon { font-size: 2.2rem; margin-bottom: 1rem; display: block; }
+        .portal-card h4 { font-weight: 700; margin-bottom: 0.5rem; }
+        .portal-card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.25rem; }
+        .portal-card .btn { min-height: 44px; border-radius: 100px; font-weight: 700; }
+
+        /* ── SMS BUTTON ── */
+        .sms-launch {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #ef4444;
+            color: #fff;
+            font-weight: 700;
+            padding: 0.85rem 1.75rem;
+            border-radius: 100px;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(239,68,68,0.25);
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+        }
+        .sms-launch:active { transform: scale(0.96); box-shadow: 0 2px 8px rgba(239,68,68,0.2); }
+
+        /* ── MOBILE ── */
+        @media (max-width: 768px) {
+            .portal-container { padding: 1.25rem 1rem; }
+            .brand-header { margin-bottom: 1.75rem; }
+            .brand-header h1 { font-size: 1.5rem; }
+            .stat-tile { padding: 1rem; margin-bottom: 0.75rem; }
+            .stat-tile .stat-value { font-size: 1.25rem; }
+            .portal-card { padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1rem; }
+            .portal-card .card-icon { font-size: 1.8rem; margin-bottom: 0.75rem; }
+            .portal-card h4 { font-size: 1.1rem; }
+            .portal-card p { font-size: 0.88rem; margin-bottom: 1rem; }
+            .row.g-4 { row-gap: 1rem; }
+        }
+
+        @media (min-width: 769px) {
+            .portal-card:hover { transform: translateY(-6px); box-shadow: 0 12px 24px rgba(0,0,0,0.08) !important; }
+        }
+    </style>
 </head>
-<body class="bg-light py-5">
-    <div class="container" style="max-width: 1000px;">
-        <!-- Brand Header Section -->
-        <div class="text-center mb-5">
-            <h1 class="fw-bold text-dark"><i class="bi bi-mortarboard-fill text-primary me-2"></i>Educlique ACADEMY</h1>
-            <p class="text-muted tracking-wider small fw-bold">INTEGRATED SCHOOL OPERATIONS PLATFORM</p>
+<body>
+    <div class="portal-container">
+        <div class="brand-header">
+            <div class="brand-icon"><i class="bi bi-mortarboard-fill"></i></div>
+            <h1 class="fw-bold text-dark">Educlique ACADEMY</h1>
+            <p class="subtitle fw-bold">INTEGRATED SCHOOL OPERATIONS PLATFORM</p>
         </div>
 
-        <!-- Real-Time Analytical Metric Counters Box Header Row -->
-        <div class="row g-3 mb-5 text-center">
-            <div class="col-md-4">
-                <div class="bg-white p-3 rounded shadow-sm border-start border-primary border-4">
-                    <small class="text-muted text-uppercase fw-semibold d-block">Enrolled Population</small>
-                    <span class="h3 fw-bold text-dark">{{ total_students }} Active Students</span>
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-4">
+                <div class="stat-tile position-relative overflow-hidden">
+                    <div class="stat-accent bg-primary"></div>
+                    <div class="stat-label">Enrolled Population</div>
+                    <p class="stat-value text-dark">{{ total_students }} <span class="fw-medium" style="font-size:0.85rem;font-weight:600;">Active</span></p>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="bg-white p-3 rounded shadow-sm border-start border-success border-4">
-                    <small class="text-muted text-uppercase fw-semibold d-block">Term Cash Collection</small>
-                    <span class="h3 fw-bold text-success">KES {{ total_collected|floatformat:0 }}</span>
+            <div class="col-6 col-md-4">
+                <div class="stat-tile position-relative overflow-hidden">
+                    <div class="stat-accent bg-success"></div>
+                    <div class="stat-label">Term Cash Collection</div>
+                    <p class="stat-value text-success">KES {{ total_collected|floatformat:0 }}</p>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="bg-white p-3 rounded shadow-sm border-start border-danger border-4">
-                    <small class="text-muted text-uppercase fw-semibold d-block">Ledger Arrears Flag</small>
-                    <span class="h3 fw-bold text-danger">{{ defaulters_count }} Accounts Owed</span>
+            <div class="col-6 col-md-4">
+                <div class="stat-tile position-relative overflow-hidden">
+                    <div class="stat-accent bg-danger"></div>
+                    <div class="stat-label">Ledger Arrears Flag</div>
+                    <p class="stat-value text-danger">{{ defaulters_count }} <span class="fw-medium" style="font-size:0.85rem;font-weight:600;">Accounts</span></p>
                 </div>
             </div>
         </div>
 
-        <!-- Operational Hub Gateway Core Modules Layout Grid Rows -->
-        <div class="row g-4">
-            <div class="col-md-6" onclick="location.href='{% url 'bursar_dashboard' %}'">
-                <div class="card h-100 p-4 portal-card text-center border-0 shadow-sm">
-                    <div class="card-body">
-                        <i class="bi bi-bank2 text-dark h1 d-block mb-3"></i>
-                        <h4 class="fw-bold text-dark">Finance & Accounts Office</h4>
-                        <p class="text-muted small">Post system receipt vouchers, track balances profiles, and view dynamic statements structures.</p>
-                        <div class="d-grid mt-3"><span class="btn btn-dark btn-sm rounded-pill">Enter Bursar Desk</span></div>
+        <div class="row g-3 g-md-4">
+            <div class="col-12 col-md-6">
+                <a href="{% url 'bursar_dashboard' %}" class="portal-card">
+                    <i class="bi bi-bank2 text-dark card-icon"></i>
+                    <h4 class="text-dark">Finance & Accounts Office</h4>
+                    <p>Post system receipt vouchers, track balances profiles, and view dynamic statements structures.</p>
+                    <div class="d-grid"><span class="btn btn-dark rounded-pill">Enter Bursar Desk</span></div>
+                </a>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="portal-card">
+                    <i class="bi bi-journal-check text-primary card-icon"></i>
+                    <h4 class="text-primary">Academic & Faculty Portal</h4>
+                    <p>Input class scores spreadsheets, calculate total grades, and analyze trajectory indicators trends.</p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'marks_entry_portal' %}" class="btn btn-primary rounded-pill">Open Marks Entry Spreadsheet</a>
+                        <a href="{% url 'academic_analytics' %}" class="btn btn-outline-primary rounded-pill"><i class="bi bi-graph-up-arrow me-1"></i>View Performance Analytics Dashboard</a>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card h-100 p-4 portal-card text-center border-0 shadow-sm">
-                    <div class="card-body">
-                        <i class="bi bi-journal-check text-primary h1 d-block mb-3"></i>
-                        <h4 class="fw-bold text-primary">Academic & Faculty Portal</h4>
-                        <p class="text-muted small">Input class scores spreadsheets, calculate total grades, and analyze trajectory indicators trends.</p>
-                        <div class="d-grid gap-2 mt-3">
-                            <a href="{% url 'marks_entry_portal' %}" class="btn btn-primary btn-sm rounded-pill">Open Marks Entry Spreadsheet</a>
-                            <a href="{% url 'academic_analytics' %}" class="btn btn-outline-primary btn-sm rounded-pill"><i class="bi bi-graph-up-arrow me-1"></i>View Performance Analytics Dashboard</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <div class="text-center mt-5">
-            <a href="{% url 'fee_sms_portal' %}" class="btn btn-outline-danger btn-sm rounded-pill px-4 py-2 fw-semibold shadow-sm"><i class="bi bi-chat-left-dots-fill me-2"></i>Launch Automated SMS Communication Panel</a>
+        <div class="text-center mt-4 mt-md-5">
+            <a href="{% url 'fee_sms_portal' %}" class="sms-launch">
+                <i class="bi bi-chat-left-dots-fill me-2"></i>Launch Automated SMS Communication Panel
+            </a>
         </div>
     </div>
 </body>
