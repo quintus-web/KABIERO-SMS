@@ -6,7 +6,6 @@
 *.md
 LICENSE
 README.md
-manage.py
 build.sh
 run_office_server.py
 prep_demo_data.py
