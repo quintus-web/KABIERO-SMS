@@ -24,7 +24,13 @@ steps:
       - '--platform'
       - 'managed'
       - '--update-env-vars'
-      - 'ALLOWED_HOSTS=kabiero-sms-bzool6cpga-uc.a.run.app'
+      - 'ALLOWED_HOSTS=kabiero-sms-bzool6cpga-uc.a.run.app,kabiero-sms-593064914742.us-central1.run.app'
+      - '--memory'
+      - '512Mi'
+      - '--cpu'
+      - '1'
+      - '--timeout'
+      - '300'
 
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/kabiero-sms/kabiero-sms:$COMMIT_SHA'

@@ -19,11 +19,22 @@ def _csv_env(name, default=''):
 
 RENDER_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '').strip()
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.50', 'testserver']
-if RENDER_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_HOSTNAME)
-ALLOWED_HOSTS += _csv_env('ALLOWED_HOSTS')
-ALLOWED_HOSTS = list(dict.fromkeys(filter(None, ALLOWED_HOSTS)))
+import os
+
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    '192.168.1.50',
+    'testserver',
+    'kabiero-sms-bzool6cpga-uc.a.run.app',
+    'kabiero-sms-593064914742.us-central1.run.app',
+]
+
+extra_hosts = os.getenv("ALLOWED_HOSTS", "")
+if extra_hosts:
+    ALLOWED_HOSTS += [host.strip() for host in extra_hosts.split(",") if host.strip()]
+
+ALLOWED_HOSTS = list(dict.fromkeys(ALLOWED_HOSTS))
 
 CSRF_TRUSTED_ORIGINS = _csv_env('CSRF_TRUSTED_ORIGINS')
 if RENDER_HOSTNAME:
