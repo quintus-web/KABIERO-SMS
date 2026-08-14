@@ -1,4 +1,3 @@
-# Automatic deployment test
 steps:
   - name: 'gcr.io/cloud-builders/docker'
     args:
@@ -24,18 +23,11 @@ steps:
       - 'us-central1'
       - '--platform'
       - 'managed'
+      - '--update-env-vars'
+      - 'ALLOWED_HOSTS=kabiero-sms-bzool6cpga-uc.a.run.app'
 
 images:
-  
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/kabiero-sms/kabiero-sms:$COMMIT_SHA'
 
-- 'us-central1-docker.pkg.dev/$PROJECT_ID/kabiero-sms/kabiero-sms:$COMMIT_SHA'
 options:
   logging: CLOUD_LOGGING_ONLY
-
-
-
-
-
-
-
-
