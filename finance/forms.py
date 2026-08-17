@@ -1,5 +1,5 @@
 from django import forms
-from .models import FeeReceipt, Student
+from .models import FeeReceipt, Student, Expense
 
 class ReceiptEntryForm(forms.ModelForm):
     student_admission = forms.CharField(
@@ -9,10 +9,10 @@ class ReceiptEntryForm(forms.ModelForm):
 
     class Meta:
         model = FeeReceipt
-        fields = ['reference_code', 'amount_paid', 'payment_channel']
+        fields = ['reference_code', 'amount', 'payment_channel']
         widgets = {
             'reference_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. QRE789XYZ'}),
-            'amount_paid': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
             'payment_channel': forms.Select(attrs={'class': 'form-select'}),
         }
 
@@ -21,3 +21,18 @@ class ReceiptEntryForm(forms.ModelForm):
         if not Student.objects.filter(admission_number=adm_no, is_active=True).exists():
             raise forms.ValidationError("No active student found with this admission number.")
         return adm_no
+
+
+class ExpenseForm(forms.ModelForm):
+    class Meta:
+        model = Expense
+        fields = ['expense_date', 'category', 'description', 'amount', 'payment_method', 'reference_code', 'status']
+        widgets = {
+            'expense_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
+            'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'What was purchased or paid for?'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'min': '0.01', 'step': '0.01'}),
+            'payment_method': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cash, M-Pesa, bank…'}),
+            'reference_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Receipt / payment reference'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+        }

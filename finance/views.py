@@ -18,6 +18,7 @@ from django.contrib.auth.hashers import check_password
 from .models import (
     Student, ClassStream, Subject, FeeStructure,
     FeeInvoice, FeeReceipt,
+    LunchEnrollment, Expense,
     ExamRecord,
     StudentAttendanceRecord,
     TeacherAttendanceRecord,
@@ -27,6 +28,7 @@ from .models import (
     LessonPlan, LearningMaterial, TimetableSlot,
     DisciplineReport, LeaveApplication, SchoolHoliday
 )
+from .forms import ExpenseForm
 from django.contrib.auth.models import User
 from .school_config import CBC_LEVELS, SCHOOL_SHORT_NAME, STUDENT_CAPACITY
 
@@ -531,6 +533,59 @@ def fee_structure(request):
         a3 = float(t3.amount) if t3 else 0
         rows.append({'level': level, 'term1': a1, 'term2': a2, 'term3': a3, 'annual': a1 + a2 + a3})
     return render(request, "finance/fee_structure.html", {'rows': rows})
+
+
+@login_required
+def lunch_management(request):
+    term = request.GET.get('term', request.POST.get('term', 'TERM_1'))
+    year = int(request.GET.get('year', request.POST.get('year', 2026)))
+    if request.method == 'POST':
+        student = get_object_or_404(Student, pk=request.POST.get('student_id'), is_active=True)
+        try:
+            amount = Decimal(request.POST.get('amount', '3000.00'))
+            if amount < 0:
+                raise ValueError
+        except Exception:
+            messages.error(request, 'Enter a valid non-negative lunch amount.')
+            return redirect(f"{request.path}?term={term}&year={year}")
+        enrollment, _ = LunchEnrollment.objects.update_or_create(
+            student=student, term=term, year=year,
+            defaults={
+                'amount': amount,
+                'is_enrolled': request.POST.get('is_enrolled') == 'on',
+                'notes': request.POST.get('notes', '').strip(),
+            },
+        )
+        state = 'enrolled in' if enrollment.is_enrolled else 'removed from'
+        messages.success(request, f'{student} was {state} the lunch programme.')
+        return redirect(f"{request.path}?term={term}&year={year}")
+
+    enrollments = LunchEnrollment.objects.filter(term=term, year=year, is_enrolled=True).select_related('student__class_stream')
+    return render(request, 'finance/lunch_management.html', {
+        'students': Student.objects.filter(is_active=True, status='ACTIVE').select_related('class_stream').order_by('admission_number'),
+        'enrollments': enrollments,
+        'term': term, 'year': year, 'terms': ['TERM_1', 'TERM_2', 'TERM_3'],
+        'lunch_total': enrollments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00'),
+    })
+
+
+@login_required
+def expense_register(request):
+    if request.method == 'POST':
+        form = ExpenseForm(request.POST)
+        if form.is_valid():
+            expense = form.save(commit=False)
+            expense.recorded_by = request.user
+            expense.save()
+            messages.success(request, 'Expense recorded successfully.')
+            return redirect('expense_register')
+    else:
+        form = ExpenseForm()
+    expenses = Expense.objects.select_related('recorded_by')
+    paid_total = expenses.filter(status='PAID').aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    return render(request, 'finance/expense_register.html', {
+        'form': form, 'expenses': expenses[:50], 'paid_total': paid_total,
+    })
 
 
 @login_required
@@ -1060,14 +1115,23 @@ def generate_bulk_invoices(request):
                 except Exception:
                     amount = Decimal("0.00")
 
+            lunch = LunchEnrollment.objects.filter(
+                student=s, term=term, year=year, is_enrolled=True
+            ).first()
+            if lunch:
+                amount += lunch.amount
+
             if amount > 0:
                 FeeInvoice.objects.get_or_create(
                     student=s, term=term, year=year,
                     defaults={
                         'title': f"{s.class_stream.name if s.class_stream else 'Unassigned'} {term.replace('_',' ')} {year} Invoice",
                         'amount': amount,
-                        'description': f"Auto-generated fee invoice for {term.replace('_',' ')} {year}"
-                    }
+                        'description': (
+                            f"Auto-generated fee invoice for {term.replace('_',' ')} {year}"
+                            + (f" including lunch (KES {lunch.amount:,.2f})" if lunch else "")
+                        ),
+                    },
                 )
                 created += 1
 

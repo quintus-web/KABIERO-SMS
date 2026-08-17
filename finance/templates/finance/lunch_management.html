@@ -1,0 +1,18 @@
+{% extends 'finance/base.html' %}
+{% block title %}Lunch Programme - Kabiero Academy{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div><h3 class="fw-bold mb-1">Lunch Programme</h3><p class="text-muted mb-0">Optional lunch charges are added only for enrolled learners.</p></div>
+  <div class="text-end"><span class="small text-muted d-block">Selected lunch charges</span><strong class="fs-4">KES {{ lunch_total|floatformat:2 }}</strong></div>
+</div>
+<form class="card card-custom p-3 mb-4" method="get">
+  <div class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label">Term</label><select name="term" class="form-select">{% for option in terms %}<option value="{{ option }}" {% if option == term %}selected{% endif %}>{{ option|cut:'_'|title }}</option>{% endfor %}</select></div><div class="col-md-4"><label class="form-label">Year</label><input name="year" type="number" class="form-control" value="{{ year }}"></div><div class="col-md-4"><button class="btn btn-outline-primary w-100">Load programme</button></div></div>
+</form>
+<div class="card card-custom p-4 mb-4"><h5 class="fw-bold mb-3">Enroll or update learner</h5>
+<form method="post" class="row g-3">{% csrf_token %}<input type="hidden" name="term" value="{{ term }}"><input type="hidden" name="year" value="{{ year }}">
+<div class="col-md-5"><label class="form-label">Learner</label><select name="student_id" class="form-select" required><option value="">Select learner</option>{% for student in students %}<option value="{{ student.id }}">{{ student.admission_number }} — {{ student.first_name }} {{ student.last_name }}</option>{% endfor %}</select></div>
+<div class="col-md-2"><label class="form-label">Term charge</label><input name="amount" type="number" min="0" step="0.01" value="3000.00" class="form-control" required></div>
+<div class="col-md-3"><label class="form-label">Notes</label><input name="notes" class="form-control" placeholder="Optional"></div>
+<div class="col-md-2 d-flex align-items-end"><div><label><input name="is_enrolled" type="checkbox" checked> Enrolled</label><button class="btn btn-primary d-block mt-2">Save</button></div></div></form></div>
+<div class="card card-custom"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th class="ps-4">Admission</th><th>Learner</th><th>Class</th><th>Term charge</th><th>Notes</th></tr></thead><tbody>{% for item in enrollments %}<tr><td class="ps-4">{{ item.student.admission_number }}</td><td>{{ item.student.first_name }} {{ item.student.last_name }}</td><td>{{ item.student.class_stream|default:'—' }}</td><td>KES {{ item.amount|floatformat:2 }}</td><td>{{ item.notes|default:'—' }}</td></tr>{% empty %}<tr><td colspan="5" class="text-center py-4 text-muted">No learners enrolled for this term.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

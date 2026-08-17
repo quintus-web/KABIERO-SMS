@@ -30,7 +30,8 @@ from finance.school_config import CBC_LEVELS
 
 DEFAULT_EXCEL_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))),
-    "PP1 Student list (6).xlsx",
+    "data",
+    "Kabiero Data.xlsx",
 )
 
 

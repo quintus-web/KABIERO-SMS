@@ -30,6 +30,23 @@ class FeeStructure(models.Model):
     def __str__(self):
         return f"{self.level} - {self.get_term_display()} {self.year}: KES {self.amount:,.2f}"
 
+
+class LunchEnrollment(models.Model):
+    """Optional lunch charge selected separately from the mandatory fee schedule."""
+    student = models.ForeignKey('Student', on_delete=models.CASCADE, related_name='lunch_enrollments')
+    term = models.CharField(max_length=10, choices=FeeStructure.TERM_CHOICES, default='TERM_1')
+    year = models.IntegerField(default=2026)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=3000.00)
+    is_enrolled = models.BooleanField(default=True)
+    notes = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        unique_together = ('student', 'term', 'year')
+        ordering = ['student__admission_number']
+
+    def __str__(self):
+        return f"Lunch: {self.student} ({self.term} {self.year})"
+
 class Subject(models.Model):
     code = models.CharField(max_length=10, unique=True)
     name = models.CharField(max_length=100)
@@ -145,6 +162,38 @@ class FeeReceipt(models.Model):
 
     def __str__(self):
         return f"Receipt {self.reference_code} - KES {self.amount}"
+
+
+class Expense(models.Model):
+    CATEGORY_CHOICES = [
+        ('PAYROLL', 'Payroll'),
+        ('FOOD', 'Food & Kitchen'),
+        ('UTILITIES', 'Utilities'),
+        ('SUPPLIES', 'Learning & Office Supplies'),
+        ('MAINTENANCE', 'Maintenance & Repairs'),
+        ('TRANSPORT', 'Transport'),
+        ('OTHER', 'Other'),
+    ]
+    STATUS_CHOICES = [
+        ('DRAFT', 'Draft'),
+        ('APPROVED', 'Approved'),
+        ('PAID', 'Paid'),
+    ]
+    expense_date = models.DateField(default=timezone.now)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    description = models.CharField(max_length=255)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    payment_method = models.CharField(max_length=30, default='CASH')
+    reference_code = models.CharField(max_length=50, blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PAID')
+    recorded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='recorded_expenses')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-expense_date', '-id']
+
+    def __str__(self):
+        return f"{self.get_category_display()} - KES {self.amount:,.2f}"
     
 class StaffProfile(models.Model):
     ROLE_CHOICES = [

@@ -1,6 +1,6 @@
 # finance/admin.py
 from django.contrib import admin
-from .models import Student, Teacher, ClassStream, Subject, AttendanceRecord, DisciplineReport, ExamRecord, FeeInvoice, FeeReceipt
+from .models import Student, Teacher, ClassStream, Subject, AttendanceRecord, DisciplineReport, ExamRecord, FeeInvoice, FeeReceipt, LunchEnrollment, Expense
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
@@ -52,3 +52,15 @@ class FeeReceiptAdmin(admin.ModelAdmin):
     list_display = ('student', 'reference_code', 'amount', 'date_paid', 'status')
     list_filter = ('status', 'date_paid')
     search_fields = ('student__first_name', 'student__last_name', 'reference_code')
+
+@admin.register(LunchEnrollment)
+class LunchEnrollmentAdmin(admin.ModelAdmin):
+    list_display = ('student', 'term', 'year', 'amount', 'is_enrolled')
+    list_filter = ('term', 'year', 'is_enrolled')
+    search_fields = ('student__admission_number', 'student__first_name', 'student__last_name')
+
+@admin.register(Expense)
+class ExpenseAdmin(admin.ModelAdmin):
+    list_display = ('expense_date', 'category', 'description', 'amount', 'status', 'payment_method')
+    list_filter = ('category', 'status', 'expense_date')
+    search_fields = ('description', 'reference_code')

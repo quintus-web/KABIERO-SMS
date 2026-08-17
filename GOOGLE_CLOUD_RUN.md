@@ -11,12 +11,14 @@ gcloud builds submit --tag us-central1-docker.pkg.dev/PROJECT_ID/kabiero-sms/kab
 gcloud run deploy kabiero-sms --image us-central1-docker.pkg.dev/PROJECT_ID/kabiero-sms/kabiero-sms:latest --region REGION --allow-unauthenticated --add-cloudsql-instances PROJECT_ID:REGION:INSTANCE --set-env-vars "DEFAULT_ADMIN_USERNAME=admin,ALLOWED_HOSTS=CLOUD_RUN_HOST" --set-secrets "SECRET_KEY=SECRET_KEY:latest,DATABASE_URL=DATABASE_URL:latest,DEFAULT_ADMIN_PASSWORD=DEFAULT_ADMIN_PASSWORD:latest"
 ```
 
-4. Before first use, run migrations and the empty-school bootstrap once. Create a Cloud Run Job from the same image, with the same Cloud SQL and secret settings, then run:
+4. Before first use, run migrations, then load the bundled Kabiero workbook into Cloud SQL. Run this from PowerShell after deploying the image:
 
 ```powershell
 python manage.py migrate --noinput
-python manage.py bootstrap_kabiero
+.\gcp-import-data.ps1 -ProjectId PROJECT_ID -Region REGION -CloudSqlInstance PROJECT:REGION:INSTANCE -ImageName kabiero-sms
 ```
+
+The import uses `KBA-2026-0001` through `KBA-2026-0295`. Add `-Replace` only to intentionally remove existing school operational data before reloading it.
 
 Create the superuser:
 
