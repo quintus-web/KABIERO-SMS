@@ -2,6 +2,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
 class ClassStream(models.Model):
@@ -185,7 +187,7 @@ class Expense(models.Model):
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     payment_method = models.CharField(max_length=30, default='CASH')
     reference_code = models.CharField(max_length=50, blank=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PAID')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='DRAFT')
     recorded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='recorded_expenses')
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -393,3 +395,134 @@ class SchoolHoliday(models.Model):
     @property
     def covers(self):
         return self.end_date or self.start_date
+
+
+class UserProfile(models.Model):
+    SYSTEM_ROLES = [
+        ('ADMIN', 'System Administrator'),
+        ('BURSAR', 'Bursar / Finance Controller'),
+        ('HEADTEACHER', 'Headteacher'),
+        ('TEACHER', 'Teacher'),
+        ('SUPPORT', 'Support Staff'),
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='user_profile')
+    role = models.CharField(max_length=20, choices=SYSTEM_ROLES, default='TEACHER')
+    phone_number = models.CharField(max_length=15, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['user__username']
+
+    def __str__(self):
+        return f"{self.user.get_full_name() or self.user.username} ({self.get_role_display()})"
+
+    @property
+    def is_admin(self):
+        return self.role == 'ADMIN'
+
+    @property
+    def is_bursar(self):
+        return self.role == 'BURSAR'
+
+    @property
+    def is_headteacher(self):
+        return self.role == 'HEADTEACHER'
+
+    @property
+    def is_teacher(self):
+        return self.role == 'TEACHER'
+
+    @property
+    def is_support(self):
+        return self.role == 'SUPPORT'
+
+
+class AuditLog(models.Model):
+    ACTION_TYPES = [
+        ('CREATE', 'Created'),
+        ('UPDATE', 'Updated'),
+        ('DELETE', 'Deleted'),
+        ('APPROVE', 'Approved'),
+        ('REJECT', 'Rejected'),
+        ('LOGIN', 'Login'),
+        ('LOGOUT', 'Logout'),
+        ('PAYMENT', 'Payment Recorded'),
+        ('BALANCE', 'Balance Changed'),
+        ('ROLE_CHANGE', 'Role Changed'),
+        ('IMPORT', 'Data Imported'),
+        ('OTHER', 'Other'),
+    ]
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='audit_logs')
+    action = models.CharField(max_length=20, choices=ACTION_TYPES)
+    model_name = models.CharField(max_length=100, blank=True)
+    object_id = models.CharField(max_length=50, blank=True)
+    description = models.TextField(blank=True)
+    old_value = models.TextField(blank=True, null=True)
+    new_value = models.TextField(blank=True, null=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['user', 'timestamp']),
+            models.Index(fields=['model_name', 'object_id']),
+            models.Index(fields=['action', 'timestamp']),
+        ]
+
+    def __str__(self):
+        user_str = self.user.get_full_name() if self.user else 'System'
+        return f"{user_str} - {self.get_action_display()} {self.model_name} ({self.timestamp.strftime('%Y-%m-%d %H:%M')})"
+
+
+class ApprovalRequest(models.Model):
+    PENDING = 'PENDING'
+    APPROVED = 'APPROVED'
+    REJECTED = 'REJECTED'
+
+    STATUS_CHOICES = [
+        (PENDING, 'Pending'),
+        (APPROVED, 'Approved'),
+        (REJECTED, 'Rejected'),
+    ]
+
+    TYPE_EXPENSE = 'EXPENSE'
+    TYPE_STUDENT_DELETION = 'STUDENT_DELETION'
+    TYPE_GRADE_PROMOTION = 'GRADE_PROMOTION'
+    TYPE_BALANCE_ADJUSTMENT = 'BALANCE_ADJUSTMENT'
+    TYPE_INVOICE_ADJUSTMENT = 'INVOICE_ADJUSTMENT'
+
+    TYPE_CHOICES = [
+        (TYPE_EXPENSE, 'Expense'),
+        (TYPE_STUDENT_DELETION, 'Student Record Deletion'),
+        (TYPE_GRADE_PROMOTION, 'Grade Promotion'),
+        (TYPE_BALANCE_ADJUSTMENT, 'Balance Adjustment'),
+        (TYPE_INVOICE_ADJUSTMENT, 'Invoice Adjustment'),
+    ]
+
+    approval_type = models.CharField(max_length=30, choices=TYPE_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    requested_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='approval_requests_made')
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approval_requests_reviewed')
+
+    reason = models.TextField(blank=True, help_text="Reason for the request")
+    rejection_reason = models.TextField(blank=True, help_text="Reason for rejection")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'approval_type', 'created_at']),
+            models.Index(fields=['requested_by', 'status']),
+        ]
+
+    def __str__(self):
+        return f"{self.get_approval_type_display()} - {self.get_status_display()} (by {self.requested_by.get_full_name() or self.requested_by.username})"

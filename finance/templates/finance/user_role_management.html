@@ -1,0 +1,60 @@
+<!-- finance/templates/finance/user_role_management.html -->
+{% extends 'finance/base.html' %}
+{% block title %}User Role Management - Educlique Academy{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+    <div>
+        <h3 class="fw-bold text-dark mb-0"><i class="bi bi-shield-lock-fill text-warning me-2"></i>User Role Management</h3>
+        <p class="text-muted small fw-semibold mb-0" style="font-size:0.72rem;">ASSIGN SYSTEM ACCESS ROLES</p>
+    </div>
+</div>
+
+<div class="card card-custom border bg-white shadow-sm p-3 p-md-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size:0.88rem;">
+            <thead class="table-light fw-bold" style="font-size:0.73rem;">
+                <tr>
+                    <th>Username</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Current Role</th>
+                    <th>Superuser</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users_with_profiles %}
+                <tr class="border-bottom">
+                    <td><code class="fw-bold text-primary">{{ u.username }}</code></td>
+                    <td class="fw-bold text-dark">{{ u.get_full_name|default:"—" }}</td>
+                    <td class="text-secondary small">{{ u.email|default:"—" }}</td>
+                    <td>
+                        {% if u.user_profile.role == 'ADMIN' %}<span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-20 fw-bold">Administrator</span>
+                        {% elif u.user_profile.role == 'BURSAR' %}<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-20 fw-bold">Bursar</span>
+                        {% elif u.user_profile.role == 'HEADTEACHER' %}<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20 fw-bold">Headteacher</span>
+                        {% elif u.user_profile.role == 'SUPPORT' %}<span class="badge bg-secondary bg-opacity-10 text-dark border fw-medium">Support</span>
+                        {% else %}<span class="badge bg-dark bg-opacity-10 text-dark border fw-medium">Teacher</span>{% endif %}
+                    </td>
+                    <td>{% if u.is_superuser %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-x-circle-fill text-muted"></i>{% endif %}</td>
+                    <td>
+                        <form method="post" class="d-flex gap-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="user_id" value="{{ u.id }}">
+                            <select name="role" class="form-select form-select-sm" style="font-size:0.78rem;">
+                                {% for val, label in role_choices %}
+                                <option value="{{ val }}" {% if u.user_profile.role == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3"><i class="bi bi-save me-1"></i>Save</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-muted py-4">No users found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -14,6 +14,7 @@ from django.db.models import Sum, Count, Q
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import check_password
+from django.contrib.contenttypes.models import ContentType
 
 from .models import (
     Student, ClassStream, Subject, FeeStructure,
@@ -26,11 +27,13 @@ from .models import (
     SchoolAsset, AssetMaintenanceLog,
     HomeworkAssignment, SchoolAnnouncement,
     LessonPlan, LearningMaterial, TimetableSlot,
-    DisciplineReport, LeaveApplication, SchoolHoliday
+    DisciplineReport, LeaveApplication, SchoolHoliday,
+    UserProfile, AuditLog, ApprovalRequest
 )
 from .forms import ExpenseForm
 from django.contrib.auth.models import User
 from .school_config import CBC_LEVELS, SCHOOL_SHORT_NAME, STUDENT_CAPACITY
+from .middleware import log_audit
 
 CORE_SUBJECTS = [
     ("Mathematics", "MAT101"),
@@ -452,8 +455,14 @@ def collect_fee_payment(request, student_id):
         if payment_type == "balance":
             try:
                 new_balance = Decimal(request.POST.get("opening_balance", 0))
+                old_balance = student.current_balance
                 student.current_balance = new_balance
                 student.save()
+                log_audit(
+                    request.user, 'BALANCE', model_name='Student', object_id=student.id,
+                    description=f"Changed {student.first_name} {student.last_name}'s balance",
+                    old_value=f"KES {old_balance:,.2f}", new_value=f"KES {new_balance:,.2f}", request=request
+                )
                 messages.success(request, f"Opening balance for {student.first_name} set to KES {new_balance:,.2f}.")
             except Exception:
                 messages.error(request, "Invalid balance amount entered.")
@@ -472,7 +481,6 @@ def collect_fee_payment(request, student_id):
         if term not in ("TERM_1", "TERM_2", "TERM_3"):
             term = "TERM_1"
 
-        # Prefer an invoice for the selected term so the payment is attributed correctly
         open_invoice = FeeInvoice.objects.filter(student=student, term=term).order_by('date_issued').first()
         if not open_invoice:
             open_invoice = FeeInvoice.objects.filter(student=student).order_by('date_issued').first()
@@ -488,7 +496,7 @@ def collect_fee_payment(request, student_id):
                 description=f"Auto-generated from {SCHOOL_SHORT_NAME} fee structure"
             )
 
-        FeeReceipt.objects.create(
+        receipt = FeeReceipt.objects.create(
             student=student,
             invoice=open_invoice,
             term=term,
@@ -499,8 +507,15 @@ def collect_fee_payment(request, student_id):
             reference_code=f"RCPT-{timezone.now().strftime('%Y%m%d%H%M%S')}-{student.id}"
         )
 
+        old_balance = student.current_balance
         student.current_balance = max(Decimal("0.00"), Decimal(student.current_balance) - amount)
         student.save()
+
+        log_audit(
+            request.user, 'PAYMENT', model_name='FeeReceipt', object_id=receipt.id,
+            description=f"Recorded {channel} payment of KES {amount:,.2f} for {student.first_name} {student.last_name}",
+            old_value=f"KES {old_balance:,.2f}", new_value=f"KES {student.current_balance:,.2f}", request=request
+        )
 
         messages.success(request, f"Payment of KES {amount:,.2f} posted via {channel}.")
         return redirect("bursar_dashboard")
@@ -576,15 +591,47 @@ def expense_register(request):
         if form.is_valid():
             expense = form.save(commit=False)
             expense.recorded_by = request.user
+            expense.status = 'DRAFT'
             expense.save()
-            messages.success(request, 'Expense recorded successfully.')
+            
+            from .middleware import log_audit
+            log_audit(
+                request.user, 'CREATE', model_name='Expense', object_id=expense.id,
+                description=f"Recorded expense: {expense.get_category_display()} - KES {expense.amount:,.2f}",
+                new_value=f"KES {expense.amount:,.2f}", request=request
+            )
+            
+            profile = getattr(request.user, 'user_profile', None)
+            role = profile.role if profile else ('ADMIN' if request.user.is_superuser else 'TEACHER')
+            
+            if role in ('ADMIN', 'HEADTEACHER'):
+                expense.status = 'APPROVED'
+                expense.save()
+                messages.success(request, 'Expense recorded and auto-approved.')
+            else:
+                ApprovalRequest.objects.create(
+                    approval_type=ApprovalRequest.TYPE_EXPENSE,
+                    content_object=expense,
+                    requested_by=request.user,
+                    reason=f"Expense: {expense.get_category_display()} - KES {expense.amount:,.2f}"
+                )
+                messages.success(request, 'Expense submitted for approval.')
+            
             return redirect('expense_register')
     else:
         form = ExpenseForm()
+    
     expenses = Expense.objects.select_related('recorded_by')
     paid_total = expenses.filter(status='PAID').aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    
+    pending_approvals = ApprovalRequest.objects.filter(
+        approval_type=ApprovalRequest.TYPE_EXPENSE,
+        status=ApprovalRequest.PENDING
+    ).select_related('content_object', 'requested_by')[:20]
+    
     return render(request, 'finance/expense_register.html', {
         'form': form, 'expenses': expenses[:50], 'paid_total': paid_total,
+        'pending_approvals': pending_approvals,
     })
 
 
@@ -1228,6 +1275,14 @@ def edit_student_info(request, student_id):
     student = get_object_or_404(Student, id=student_id)
     
     if request.method == "POST":
+        old_values = {
+            'first_name': student.first_name,
+            'last_name': student.last_name,
+            'gender': student.gender,
+            'guardian_name': student.guardian_name,
+            'parent_phone': student.parent_phone,
+            'class_stream': student.class_stream.name if student.class_stream else 'Unassigned',
+        }
         student.first_name = request.POST.get("first_name").strip()
         student.last_name = request.POST.get("last_name").strip()
         student.gender = 'F' if request.POST.get("gender", "M").upper() in ['F', 'GIRL', 'FEMALE'] else 'M'
@@ -1240,6 +1295,20 @@ def edit_student_info(request, student_id):
             student.class_stream = stream_instance
             
         student.save()
+        
+        new_values = {
+            'first_name': student.first_name,
+            'last_name': student.last_name,
+            'gender': student.gender,
+            'guardian_name': student.guardian_name,
+            'parent_phone': student.parent_phone,
+            'class_stream': student.class_stream.name if student.class_stream else 'Unassigned',
+        }
+        log_audit(
+            request.user, 'UPDATE', model_name='Student', object_id=student.id,
+            description=f"Updated profile for {student.first_name} {student.last_name}",
+            old_value=str(old_values), new_value=str(new_values), request=request
+        )
         messages.success(request, f"Profile parameters for {student.first_name} updated successfully.")
         return redirect('student_registry')
         
@@ -1254,6 +1323,12 @@ def delete_student_record(request, student_id):
     if request.method == "POST":
         first_name = student.first_name
         last_name = student.last_name
+        admission_number = student.admission_number
+        log_audit(
+            request.user, 'DELETE', model_name='Student', object_id=student.id,
+            description=f"Deleted student {first_name} {last_name} ({admission_number})",
+            old_value=admission_number, request=request
+        )
         student.delete()
         messages.warning(request, f"Learner record {first_name} {last_name} has been permanently purged from the database.")
         return redirect('student_registry')
@@ -1291,6 +1366,7 @@ def grade_promotion_dashboard(request):
                 promotion_details.append({'student': student, 'action': 'Skipped', 'reason': 'No higher grade available'})
                 continue
 
+            old_grade = current_grade
             if current_grade == "Grade 9":
                 student.status = 'GRADUATED'
                 student.is_active = False
@@ -1305,6 +1381,11 @@ def grade_promotion_dashboard(request):
                 promotion_details.append({'student': student, 'action': 'Promoted', 'reason': f'Moved to {next_grade}'})
 
             student.save()
+            log_audit(
+                request.user, 'UPDATE', model_name='Student', object_id=student.id,
+                description=f"Grade promotion: {student.first_name} {student.last_name} from {old_grade} to {student.class_stream.name if student.class_stream else 'Graduated'}",
+                old_value=old_grade, new_value=student.class_stream.name if student.class_stream else 'Graduated', request=request
+            )
 
         messages.success(request, f"Promotion complete: {promoted_count} promoted, {graduated_count} graduated, {skipped_count} skipped.")
 
@@ -1396,6 +1477,16 @@ def staff_create(request):
             return redirect("staff_create")
         user.set_password(password)
         user.save()
+
+        system_role = 'TEACHER'
+        if role == 'PRINCIPAL':
+            system_role = 'ADMIN'
+        elif role == 'ACCOUNTANT':
+            system_role = 'BURSAR'
+        elif role == 'SUPPORT':
+            system_role = 'SUPPORT'
+
+        UserProfile.objects.get_or_create(user=user, defaults={'role': system_role})
 
         specialization = Subject.objects.filter(id=specialization_id).first() if specialization_id else None
         StaffProfile.objects.create(
@@ -2130,7 +2221,7 @@ def add_new_student_onboarding(request):
         
         stream = ClassStream.objects.get(id=stream_id) if stream_id else None
         
-        Student.objects.create(
+        student = Student.objects.create(
             admission_number=admission_number,
             first_name=first_name,
             last_name=last_name,
@@ -2142,7 +2233,182 @@ def add_new_student_onboarding(request):
             current_balance=0.00,
             is_active=True
         )
+        log_audit(
+            request.user, 'CREATE', model_name='Student', object_id=student.id,
+            description=f"Enrolled student {first_name} {last_name} ({admission_number})",
+            new_value=admission_number, request=request
+        )
         messages.success(request, f"Student {first_name} {last_name} enrolled successfully.")
         return redirect('student_registry')
     
     return redirect('student_registry')
+
+
+@login_required
+def user_role_management(request):
+    if not request.user.is_superuser:
+        messages.error(request, "Access denied: only System Administrators can manage roles.")
+        return redirect('executive_kpis')
+
+    users_with_profiles = User.objects.all().select_related('user_profile').order_by('username')
+    for u in users_with_profiles:
+        if not hasattr(u, 'user_profile'):
+            role = 'ADMIN' if u.is_superuser else 'TEACHER'
+            UserProfile.objects.create(user=u, role=role)
+
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        new_role = request.POST.get('role')
+        if user_id and new_role:
+            target_user = User.objects.filter(id=user_id).first()
+            if target_user:
+                old_role = target_user.user_profile.role if hasattr(target_user, 'user_profile') else 'UNKNOWN'
+                profile, _ = UserProfile.objects.get_or_create(user=target_user, defaults={'role': new_role})
+                if profile.role != new_role:
+                    from .middleware import log_audit
+                    log_audit(
+                        request.user, 'ROLE_CHANGE', model_name='UserProfile', object_id=target_user.id,
+                        description=f"Changed role for {target_user.get_full_name() or target_user.username}",
+                        old_value=old_role, new_value=new_role, request=request
+                    )
+                    profile.role = new_role
+                    profile.save()
+                    messages.success(request, f"Role updated for {target_user.get_full_name() or target_user.username}.")
+        return redirect('user_role_management')
+
+    return render(request, 'finance/user_role_management.html', {
+        'users_with_profiles': users_with_profiles,
+        'role_choices': UserProfile.SYSTEM_ROLES,
+    })
+
+
+@login_required
+def audit_log_viewer(request):
+    if not request.user.is_superuser:
+        messages.error(request, "Access denied: only System Administrators can view audit logs.")
+        return redirect('executive_kpis')
+
+    logs = AuditLog.objects.all().select_related('user').order_by('-timestamp')[:500]
+    return render(request, 'finance/audit_log_viewer.html', {
+        'logs': logs,
+    })
+
+
+@login_required
+def approval_dashboard(request):
+    profile = getattr(request.user, 'user_profile', None)
+    role = profile.role if profile else ('ADMIN' if request.user.is_superuser else 'TEACHER')
+    
+    if role not in ('ADMIN', 'HEADTEACHER', 'BURSAR'):
+        messages.error(request, "Access denied: only Administrators, Headteachers, and Bursars can review approvals.")
+        return redirect('executive_kpis')
+
+    pending = ApprovalRequest.objects.filter(status=ApprovalRequest.PENDING).select_related('requested_by', 'reviewed_by')
+    reviewed = ApprovalRequest.objects.filter(status__in=[ApprovalRequest.APPROVED, ApprovalRequest.REJECTED]).select_related('requested_by', 'reviewed_by')[:100]
+
+    return render(request, 'finance/approval_dashboard.html', {
+        'pending_approvals': pending,
+        'reviewed_approvals': reviewed,
+    })
+
+
+@login_required
+def approve_request(request, approval_id):
+    approval = get_object_or_404(ApprovalRequest, id=approval_id)
+    
+    profile = getattr(request.user, 'user_profile', None)
+    role = profile.role if profile else ('ADMIN' if request.user.is_superuser else 'TEACHER')
+    
+    if role not in ('ADMIN', 'HEADTEACHER'):
+        messages.error(request, "Access denied: only Administrators and Headteachers can approve requests.")
+        return redirect('approval_dashboard')
+
+    if approval.status != ApprovalRequest.PENDING:
+        messages.warning(request, "This request has already been processed.")
+        return redirect('approval_dashboard')
+
+    if request.method == 'POST':
+        rejection_reason = request.POST.get('rejection_reason', '').strip()
+        
+        approval.status = ApprovalRequest.APPROVED
+        approval.reviewed_by = request.user
+        approval.reviewed_at = timezone.now()
+        approval.save()
+
+        content_obj = approval.content_object
+        if content_obj:
+            if approval.approval_type == ApprovalRequest.TYPE_EXPENSE and isinstance(content_obj, Expense):
+                content_obj.status = 'APPROVED'
+                content_obj.save()
+            elif approval.approval_type == ApprovalRequest.TYPE_STUDENT_DELETION and isinstance(content_obj, Student):
+                content_obj.status = 'INACTIVE'
+                content_obj.is_active = False
+                content_obj.save()
+            elif approval.approval_type == ApprovalRequest.TYPE_GRADE_PROMOTION and isinstance(content_obj, Student):
+                content_obj.status = 'ACTIVE'
+                content_obj.is_active = True
+                content_obj.save()
+            elif approval.approval_type == ApprovalRequest.TYPE_BALANCE_ADJUSTMENT and isinstance(content_obj, Student):
+                content_obj.status = 'ACTIVE'
+                content_obj.save()
+
+        from .middleware import log_audit
+        log_audit(
+            request.user, 'APPROVE', model_name='ApprovalRequest', object_id=approval.id,
+            description=f"Approved {approval.get_approval_type_display()} request #{approval.id}",
+            old_value='PENDING', new_value='APPROVED', request=request
+        )
+        
+        messages.success(request, f"Request #{approval.id} has been approved.")
+        return redirect('approval_dashboard')
+
+    return render(request, 'finance/approval_confirm.html', {
+        'approval': approval,
+        'action': 'approve',
+    })
+
+
+@login_required
+def reject_request(request, approval_id):
+    approval = get_object_or_404(ApprovalRequest, id=approval_id)
+    
+    profile = getattr(request.user, 'user_profile', None)
+    role = profile.role if profile else ('ADMIN' if request.user.is_superuser else 'TEACHER')
+    
+    if role not in ('ADMIN', 'HEADTEACHER'):
+        messages.error(request, "Access denied: only Administrators and Headteachers can reject requests.")
+        return redirect('approval_dashboard')
+
+    if approval.status != ApprovalRequest.PENDING:
+        messages.warning(request, "This request has already been processed.")
+        return redirect('approval_dashboard')
+
+    if request.method == 'POST':
+        rejection_reason = request.POST.get('rejection_reason', '').strip()
+        
+        approval.status = ApprovalRequest.REJECTED
+        approval.reviewed_by = request.user
+        approval.reviewed_at = timezone.now()
+        approval.rejection_reason = rejection_reason
+        approval.save()
+
+        content_obj = approval.content_object
+        if content_obj:
+            if approval.approval_type == ApprovalRequest.TYPE_EXPENSE and isinstance(content_obj, Expense):
+                content_obj.status = 'REJECTED'
+                content_obj.save()
+
+        from .middleware import log_audit
+        log_audit(
+            request.user, 'REJECT', model_name='ApprovalRequest', object_id=approval.id,
+            description=f"Rejected {approval.get_approval_type_display()} request #{approval.id}. Reason: {rejection_reason or 'No reason provided'}",
+            old_value='PENDING', new_value='REJECTED', request=request
+        )
+        
+        messages.warning(request, f"Request #{approval.id} has been rejected.")
+        return redirect('approval_dashboard')
+
+    return render(request, 'finance/approval_confirm.html', {
+        'approval': approval,
+        'action': 'reject',
+    })

@@ -1,7 +1,114 @@
+<!-- finance/templates/finance/expense_register.html -->
 {% extends 'finance/base.html' %}
 {% block title %}Expenses - Kabiero Academy{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4"><div><h3 class="fw-bold mb-1">Expense Register</h3><p class="text-muted mb-0">Record and track school spending.</p></div><div class="text-end"><span class="small text-muted d-block">Paid expenses</span><strong class="fs-4">KES {{ paid_total|floatformat:2 }}</strong></div></div>
-<div class="card card-custom p-4 mb-4"><h5 class="fw-bold mb-3">New expense</h5><form method="post" class="row g-3">{% csrf_token %}{% for field in form %}<div class="col-md-{% if field.name == 'description' %}6{% else %}3{% endif %}"><label class="form-label">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>{% endfor %}<div class="col-12"><button class="btn btn-primary">Record expense</button></div></form></div>
-<div class="card card-custom"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th class="ps-4">Date</th><th>Category</th><th>Description</th><th>Reference</th><th>Status</th><th class="text-end pe-4">Amount</th></tr></thead><tbody>{% for expense in expenses %}<tr><td class="ps-4">{{ expense.expense_date }}</td><td>{{ expense.get_category_display }}</td><td>{{ expense.description }}</td><td>{{ expense.reference_code|default:'—' }}</td><td><span class="badge bg-secondary">{{ expense.get_status_display }}</span></td><td class="text-end pe-4 fw-bold">KES {{ expense.amount|floatformat:2 }}</td></tr>{% empty %}<tr><td colspan="6" class="text-center py-4 text-muted">No expenses recorded yet.</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">Expense Register</h3>
+        <p class="text-muted mb-0">Record and track school spending.</p>
+    </div>
+    <div class="text-end">
+        <span class="small text-muted d-block">Paid expenses</span>
+        <strong class="fs-4">KES {{ paid_total|floatformat:2 }}</strong>
+    </div>
+</div>
+
+<div class="card card-custom p-4 mb-4">
+    <h5 class="fw-bold mb-3">New expense</h5>
+    <form method="post" class="row g-3">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="col-md-{% if field.name == 'description' %}6{% else %}3{% endif %}">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% for error in field.errors %}
+            <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+        <div class="col-12">
+            <button class="btn btn-primary">Record expense</button>
+        </div>
+    </form>
+</div>
+
+{% if pending_approvals %}
+<div class="card card-custom border border-warning mb-4">
+    <div class="card-header bg-warning bg-opacity-10 border-warning">
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history me-2"></i>Pending Your Approval ({{ pending_approvals|length }})</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-4">ID</th>
+                    <th>Type</th>
+                    <th>Requested By</th>
+                    <th>Reason</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for approval in pending_approvals %}
+                <tr>
+                    <td class="ps-4"><code class="fw-bold text-primary">#{{ approval.id }}</code></td>
+                    <td><span class="badge bg-warning text-dark">{{ approval.get_approval_type_display }}</span></td>
+                    <td class="fw-bold">{{ approval.requested_by.get_full_name|default:approval.requested_by.username }}</td>
+                    <td class="small">{{ approval.reason|truncatechars:60 }}</td>
+                    <td class="small">{{ approval.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'approve_request' approval.id %}" class="btn btn-sm btn-success rounded-pill px-3">
+                                <i class="bi bi-check-lg me-1"></i>Approve
+                            </a>
+                            <a href="{% url 'reject_request' approval.id %}" class="btn btn-sm btn-danger rounded-pill px-3">
+                                <i class="bi bi-x-lg me-1"></i>Reject
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<div class="card card-custom">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-4">Date</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Reference</th>
+                    <th>Status</th>
+                    <th class="text-end pe-4">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expense in expenses %}
+                <tr>
+                    <td class="ps-4">{{ expense.expense_date }}</td>
+                    <td>{{ expense.get_category_display }}</td>
+                    <td>{{ expense.description }}</td>
+                    <td>{{ expense.reference_code|default:'—' }}</td>
+                    <td>
+                        {% if expense.status == 'DRAFT' %}<span class="badge bg-warning text-dark">Draft</span>
+                        {% elif expense.status == 'APPROVED' %}<span class="badge bg-success">Approved</span>
+                        {% elif expense.status == 'PAID' %}<span class="badge bg-primary">Paid</span>
+                        {% elif expense.status == 'REJECTED' %}<span class="badge bg-danger">Rejected</span>
+                        {% else %}<span class="badge bg-secondary">{{ expense.get_status_display }}</span>{% endif %}
+                    </td>
+                    <td class="text-end pe-4 fw-bold">KES {{ expense.amount|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center py-4 text-muted">No expenses recorded yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

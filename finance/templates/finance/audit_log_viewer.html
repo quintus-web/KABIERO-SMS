@@ -1,0 +1,60 @@
+<!-- finance/templates/finance/audit_log_viewer.html -->
+{% extends 'finance/base.html' %}
+{% block title %}Audit Logs - Educlique Academy{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+    <div>
+        <h3 class="fw-bold text-dark mb-0"><i class="bi bi-journal-text text-info me-2"></i>Audit Logs</h3>
+        <p class="text-muted small fw-semibold mb-0" style="font-size:0.72rem;">SYSTEM ACTIVITY HISTORY</p>
+    </div>
+</div>
+
+<div class="card card-custom border bg-white shadow-sm p-3 p-md-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size:0.88rem;">
+            <thead class="table-light fw-bold" style="font-size:0.73rem;">
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Model</th>
+                    <th>Object ID</th>
+                    <th>Description</th>
+                    <th>Old Value</th>
+                    <th>New Value</th>
+                    <th>IP Address</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr class="border-bottom">
+                    <td class="small text-nowrap">{{ log.timestamp|date:"Y-m-d H:i" }}</td>
+                    <td class="fw-bold">{{ log.user.get_full_name|default:"System" }}</td>
+                    <td>
+                        {% if log.action == 'CREATE' %}<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20 fw-bold">Created</span>
+                        {% elif log.action == 'UPDATE' %}<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-20 fw-bold">Updated</span>
+                        {% elif log.action == 'DELETE' %}<span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-20 fw-bold">Deleted</span>
+                        {% elif log.action == 'APPROVE' %}<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20 fw-bold">Approved</span>
+                        {% elif log.action == 'ROLE_CHANGE' %}<span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-20 fw-bold">Role Change</span>
+                        {% elif log.action == 'PAYMENT' %}<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-20 fw-bold">Payment</span>
+                        {% elif log.action == 'BALANCE' %}<span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-20 fw-bold">Balance</span>
+                        {% elif log.action == 'LOGIN' %}<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20 fw-bold">Login</span>
+                        {% elif log.action == 'LOGOUT' %}<span class="badge bg-secondary bg-opacity-10 text-dark border fw-medium">Logout</span>
+                        {% else %}<span class="badge bg-dark bg-opacity-10 text-dark border fw-medium">{{ log.get_action_display }}</span>{% endif %}
+                    </td>
+                    <td class="small">{{ log.model_name|default:"—" }}</td>
+                    <td><code class="small">{{ log.object_id|default:"—" }}</code></td>
+                    <td class="small">{{ log.description|default:"—"|truncatechars:60 }}</td>
+                    <td class="small text-muted">{{ log.old_value|default:"—"|truncatechars:40 }}</td>
+                    <td class="small text-dark">{{ log.new_value|default:"—"|truncatechars:40 }}</td>
+                    <td class="small">{{ log.ip_address|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9" class="text-center text-muted py-4">No audit logs found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

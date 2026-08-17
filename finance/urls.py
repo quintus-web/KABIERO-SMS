@@ -75,4 +75,13 @@ urlpatterns = [
     path('reports/', views.finance_reports_hub, name='finance_reports'),
     path('reports/export/<str:report_type>/csv/', views.export_report_csv, name='export_report_csv'),
     path('reports/generate-invoices/', views.generate_bulk_invoices, name='generate_bulk_invoices'),
+
+    # ── SYSTEM ADMINISTRATION & AUDIT ──
+    path('system/roles/', views.user_role_management, name='user_role_management'),
+    path('system/audit-logs/', views.audit_log_viewer, name='audit_log_viewer'),
+
+    # ── APPROVAL WORKFLOW ──
+    path('approvals/', views.approval_dashboard, name='approval_dashboard'),
+    path('approvals/<int:approval_id>/approve/', views.approve_request, name='approve_request'),
+    path('approvals/<int:approval_id>/reject/', views.reject_request, name='reject_request'),
 ]

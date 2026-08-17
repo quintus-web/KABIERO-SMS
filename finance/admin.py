@@ -1,6 +1,30 @@
 # finance/admin.py
 from django.contrib import admin
-from .models import Student, Teacher, ClassStream, Subject, AttendanceRecord, DisciplineReport, ExamRecord, FeeInvoice, FeeReceipt, LunchEnrollment, Expense
+from .models import Student, Teacher, ClassStream, Subject, AttendanceRecord, DisciplineReport, ExamRecord, FeeInvoice, FeeReceipt, LunchEnrollment, Expense, UserProfile, AuditLog
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'role', 'phone_number', 'created_at')
+    list_filter = ('role', 'created_at')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'user__email')
+    ordering = ('user__username',)
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    list_display = ('user', 'action', 'model_name', 'object_id', 'timestamp', 'ip_address')
+    list_filter = ('action', 'timestamp')
+    search_fields = ('user__username', 'description', 'model_name', 'object_id')
+    readonly_fields = ('user', 'action', 'model_name', 'object_id', 'description', 'old_value', 'new_value', 'ip_address', 'timestamp')
+    ordering = ('-timestamp',)
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):

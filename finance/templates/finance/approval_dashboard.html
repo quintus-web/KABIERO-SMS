@@ -1,0 +1,101 @@
+<!-- finance/templates/finance/approval_dashboard.html -->
+{% extends 'finance/base.html' %}
+{% block title %}Approvals - Educlique Academy{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+    <div>
+        <h3 class="fw-bold text-dark mb-0"><i class="bi bi-check2-circle text-success me-2"></i>Approval Dashboard</h3>
+        <p class="text-muted small fw-semibold mb-0" style="font-size:0.72rem;">REVIEW PENDING REQUESTS</p>
+    </div>
+</div>
+
+{% if pending_approvals %}
+<div class="card card-custom border bg-white shadow-sm p-3 p-md-4 mb-4">
+    <h5 class="fw-bold text-warning mb-3"><i class="bi bi-clock-history me-2"></i>Pending Approval ({{ pending_approvals|length }})</h5>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size:0.88rem;">
+            <thead class="table-light fw-bold" style="font-size:0.73rem;">
+                <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Requested By</th>
+                    <th>Reason / Details</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for approval in pending_approvals %}
+                <tr class="border-bottom">
+                    <td><code class="fw-bold text-primary">#{{ approval.id }}</code></td>
+                    <td>
+                        <span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-20 fw-bold">
+                            {{ approval.get_approval_type_display }}
+                        </span>
+                    </td>
+                    <td class="fw-bold">{{ approval.requested_by.get_full_name|default:approval.requested_by.username }}</td>
+                    <td class="small">{{ approval.reason|default:"—"|truncatechars:80 }}</td>
+                    <td class="small text-nowrap">{{ approval.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'approve_request' approval.id %}" class="btn btn-sm btn-success rounded-pill px-3">
+                                <i class="bi bi-check-lg me-1"></i>Approve
+                            </a>
+                            <a href="{% url 'reject_request' approval.id %}" class="btn btn-sm btn-danger rounded-pill px-3">
+                                <i class="bi bi-x-lg me-1"></i>Reject
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-muted py-4">No pending approvals.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-success border-0 mb-4">
+    <i class="bi bi-check-circle-fill me-2"></i>No pending approvals at this time.
+</div>
+{% endif %}
+
+<div class="card card-custom border bg-white shadow-sm p-3 p-md-4">
+    <h5 class="fw-bold text-muted mb-3"><i class="bi bi-journal-check me-2"></i>Recently Reviewed</h5>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size:0.88rem;">
+            <thead class="table-light fw-bold" style="font-size:0.73rem;">
+                <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Requested By</th>
+                    <th>Reviewed By</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for approval in reviewed_approvals %}
+                <tr class="border-bottom">
+                    <td><code class="fw-bold">#{{ approval.id }}</code></td>
+                    <td class="small">{{ approval.get_approval_type_display }}</td>
+                    <td>
+                        {% if approval.status == 'APPROVED' %}
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20 fw-bold">Approved</span>
+                        {% else %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-20 fw-bold">Rejected</span>
+                        {% endif %}
+                    </td>
+                    <td class="small">{{ approval.requested_by.get_full_name|default:approval.requested_by.username }}</td>
+                    <td class="small">{{ approval.reviewed_by.get_full_name|default:"—" }}</td>
+                    <td class="small text-nowrap">{{ approval.reviewed_at|date:"Y-m-d H:i"|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-muted py-4">No reviewed approvals yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

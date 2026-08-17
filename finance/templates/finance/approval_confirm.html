@@ -1,0 +1,75 @@
+<!-- finance/templates/finance/approval_confirm.html -->
+{% extends 'finance/base.html' %}
+{% block title %}{{ action|capfirst }} Request - Educlique Academy{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+    <div>
+        <h3 class="fw-bold text-dark mb-0">
+            {% if action == 'approve' %}
+                <i class="bi bi-check-circle text-success me-2"></i>Approve Request
+            {% else %}
+                <i class="bi bi-x-circle text-danger me-2"></i>Reject Request
+            {% endif %}
+        </h3>
+        <p class="text-muted small fw-semibold mb-0" style="font-size:0.72rem;">REQUEST #{{ approval.id }}</p>
+    </div>
+</div>
+
+<div class="card card-custom border bg-white shadow-sm p-3 p-md-4">
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <label class="form-label text-muted small fw-bold">TYPE</label>
+            <div class="fw-bold">{{ approval.get_approval_type_display }}</div>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label text-muted small fw-bold">REQUESTED BY</label>
+            <div class="fw-bold">{{ approval.requested_by.get_full_name|default:approval.requested_by.username }}</div>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label text-muted small fw-bold">DATE REQUESTED</label>
+            <div>{{ approval.created_at|date:"Y-m-d H:i" }}</div>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label text-muted small fw-bold">STATUS</label>
+            <div>
+                <span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-20 fw-bold">Pending</span>
+            </div>
+        </div>
+        <div class="col-12">
+            <label class="form-label text-muted small fw-bold">REASON</label>
+            <div class="p-2 bg-light rounded">{{ approval.reason|default:"No reason provided." }}</div>
+        </div>
+    </div>
+
+    {% if action == 'reject' %}
+    <form method="post" class="mb-3">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label text-muted small fw-bold">REJECTION REASON</label>
+            <textarea name="rejection_reason" class="form-control" rows="3" placeholder="Please provide a reason for rejection..." required></textarea>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-danger rounded-pill px-4">
+                <i class="bi bi-x-lg me-1"></i>Confirm Rejection
+            </button>
+            <a href="{% url 'approval_dashboard' %}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+        </div>
+    </form>
+    {% else %}
+    <form method="post" class="mb-3">
+        {% csrf_token %}
+        <div class="alert alert-info border-0">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            You are about to <strong>approve</strong> this request. This action will be recorded in the audit log.
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success rounded-pill px-4">
+                <i class="bi bi-check-lg me-1"></i>Confirm Approval
+            </button>
+            <a href="{% url 'approval_dashboard' %}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+        </div>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}
