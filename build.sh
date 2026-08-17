@@ -14,4 +14,7 @@ python manage.py migrate --noinput --skip-checks
 echo "=== Applying Kabiero Academy starter configuration ==="
 python manage.py bootstrap_kabiero --skip-checks
 
+echo "=== Importing students and staff from Excel ==="
+python manage.py import_xlsx
+
 echo "=== Build complete ==="

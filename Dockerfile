@@ -11,4 +11,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD exec gunicorn sms_core.wsgi:application --bind 0.0.0.0:${PORT} --workers 2 --access-logfile - --error-logfile -
+CMD sh -c "python manage.py migrate --noinput && python manage.py import_xlsx && exec gunicorn sms_core.wsgi:application --bind 0.0.0.0:${PORT} --workers 2 --access-logfile - --error-logfile -"
